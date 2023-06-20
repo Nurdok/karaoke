@@ -8,6 +8,12 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 
+[tool.poetry.group.test.dependencies]
+pytest = "*"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+mypy = "*"
 
 [build-system]
 requires = ["poetry-core"]
