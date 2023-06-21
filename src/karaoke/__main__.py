@@ -1,5 +1,4 @@
 import click
-import redis
 from karaoke.playlist import *
 
 
@@ -19,3 +18,7 @@ def list_users():
     all_users = User.get_all_users()
     for user in all_users:
         click.echo(f"{user.id}: {user.name}")
+
+
+if __name__ == "__main__":
+    list_users()
