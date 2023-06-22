@@ -11,12 +11,7 @@ def index():
 def next_video():
     # Perform any necessary logic to determine the next video URL
     youtube_urls = [
-        'https://www.youtube.com/embed/9bZkp7q19f0',
-        'https://www.youtube.com/embed/RubBzkZzpUA',
-        'https://www.youtube.com/embed/9bZkp7q19f0',
-        'https://www.youtube.com/embed/9bZkp7q19f0',
-        'https://www.youtube.com/embed/RubBzkZzpUA',
-        'https://www.youtube.com/embed/RubBzkZzpUA',
+        "https://www.youtube.com/embed/NeyIh_uFilY",
     ]
     video_url = random.choice(youtube_urls)
     return video_url
