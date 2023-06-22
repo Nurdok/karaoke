@@ -3,6 +3,7 @@ from enum import Enum
 import random
 from typing import Optional
 import logging
+from karaoke.storage import redis_api
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -44,6 +45,22 @@ class User:
         self.name = name
         self.song_ratings: list[UserSongRating] = []
 
+    @classmethod
+    def create(cls, name: str) -> "User":
+        return cls(cls.generate_id(), name)
+
+    @classmethod
+    def generate_id(cls) -> str:
+        return redis_api.incr("user:id:counter")
+
+    @classmethod
+    def get_user(cls, id: int) -> "User":
+        raise NotImplementedError()
+
+    @classmethod
+    def get_all_users(cls) -> list["User"]:
+        raise NotImplementedError()
+
     def __str__(self):
         return f"{self.name} ({self.id})"
 
@@ -66,11 +83,24 @@ class UserSongRating:
 
 
 class Session:
-    def __init__(self, id: str, users: list[User]):
+    def __init__(self, users: list[User], id: Optional[str]):
         self.id = id
         self.users = users
         self.unplayed_songs = self.get_all_songs()
         self.user_scores = {user: 0 for user in users}
+
+    @classmethod
+    def create(cls, users: list[User]) -> "Session":
+        return cls(users, cls.generate_id())
+
+    @staticmethod
+    def generate_id() -> int:
+        letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        exists: bool = True
+        while exists:
+            new_id: str = "".join(random.choices(letters, k=4))
+            exists = redis_api.exists(f"session:id={new_id}")
+        return new_id
 
     def get_rating_scores(self) -> dict[Rating, int]:
         return {
