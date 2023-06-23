@@ -26,6 +26,14 @@ class Song:
         self.artist: str = ""
         self.video_link: str = ""
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Song):
+            return False
+        return self.id == other.id
+
+    def __hash__(self) -> int:
+        return hash(self.id)
+
     @classmethod
     def create(cls, title: str, artist: str, video_link: str) -> "Song":
         self: Song = cls()
@@ -147,6 +155,21 @@ class User:
         self = cls()
         self.id = user_id
         self.name = cls.get_user_name(user_id)
+        for song_id in redis_api.smembers(f"user:{user_id}:song:rated"):
+            song_id = int(song_id)
+            raw_rating = redis_api.get(f"user:{user_id}:song:{song_id}:rating")
+            if raw_rating is None:
+                raise RuntimeError(
+                    f"User {user_id} rated song {song_id} but rating not found."
+                )
+            self.song_ratings.append(
+                UserSongRating(
+                    song=Song.find_by_id(song_id),
+                    rating=Rating(int(raw_rating)),
+                    will_sing_alone=False,
+                    avoid_early=False,
+                )
+            )
         return self
 
     @classmethod
@@ -171,9 +194,29 @@ class User:
 
     def get_rating_for_song(self, song: Song) -> Rating:
         for rating in self.song_ratings:
-            if rating.song == song:
+            if rating.song.id == song.id:
                 return rating.rating
         return Rating.DONT_KNOW
+
+    def rate_song(self, song: Song, rating: Rating) -> None:
+        redis_api.set(f"user:{self.id}:song:{song.id}:rating", rating.value)
+        redis_api.sadd(f"user:{self.id}:song:rated", song.id)
+        # redis_api.set(f"user:{self.id}:song:{song.id}:will_sing_alone", False)
+        # redis_api.set(f"user:{self.id}:song:{song.id}:avoid_early", False)
+
+        for user_rating in self.song_ratings:
+            if user_rating.song == song:
+                user_rating.rating = rating
+                return
+
+        self.song_ratings.append(
+            UserSongRating(
+                song=song,
+                rating=rating,
+                will_sing_alone=False,
+                avoid_early=False,
+            )
+        )
 
 
 @dataclass
@@ -215,23 +258,28 @@ class Session:
         self.id = session_id
         self.users = [
             User.find_by_id(int(user_id))
-            for user_id in redis_api.smembers(f"session:id={id}:users")
+            for user_id in redis_api.smembers(f"session:id={self.id}:users")
         ]
         self.unplayed_songs = [
             Song.find_by_id(int(song_id))
             for song_id in redis_api.smembers(
-                f"session:id={id}:unplayed_songs"
+                f"session:id={self.id}:unplayed_songs"
             )
         ]
         self.user_scores = {
             user: int(
                 cast(
                     str,
-                    redis_api.get(f"session:id={id}:user_scores:{user.id}"),
+                    redis_api.get(
+                        f"session:id={self.id}:user_scores:{user.id}"
+                    ),
                 )
             )
             for user in self.users
         }
+        logger.info(
+            f"Loaded session {self.id} with users {self.users} and unplayed songs {self.unplayed_songs} and user scores {self.user_scores}"
+        )
         return self
 
     @staticmethod
@@ -269,20 +317,27 @@ class Session:
         self, candidates: list[Song], user: User
     ) -> list[Song]:
         logger.info(f"Pruning candidates for {user.name}")
+        logger.info(f"{user.name} has {len(user.song_ratings)} ratings")
         pruned_candidates: list[Song] = []
         for rating in [
             Rating.NEED_THE_MIC,
             Rating.CAN_TAKE_THE_MIC,
             Rating.SING_ALONG,
         ]:
+            logger.info(f"Pruning for rating {rating}")
+            for song in candidates:
+                logger.info(f"Checking song {song.title}")
+                if user.get_rating_for_song(song) == rating:
+                    logger.info(
+                        f"{user.name} has rating {rating} for {song.title}"
+                    )
+                    pruned_candidates.append(song)
+
             if pruned_candidates:
                 logger.info(
                     f"Pruned candidates: {format_song_list(pruned_candidates)}"
                 )
                 return pruned_candidates
-            for song in candidates:
-                if user.get_rating_for_song(song) == rating:
-                    pruned_candidates.append(song)
 
         # This user wouldn't benefit from any of the candidates, so we'll
         # just return the original list
@@ -318,6 +373,7 @@ class Session:
         logger.info(f"Picked {picked.title}.")
         logger.info(f"Combined score: {self.get_combined_score(picked)}")
         self.unplayed_songs.remove(picked)
+        redis_api.srem(f"session:id={self.id}:unplayed_songs", picked.id)
         for user in self.users:
             self.user_scores[user] += self.get_rating_score(
                 user.get_rating_for_song(picked)

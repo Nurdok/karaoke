@@ -12,6 +12,8 @@
             height: 100%;
         }
         #strip {
+            display: flex;
+            flex: 0 0 auto;
             height: 50px;
             background-color: #ccc;
             padding: 10px;
@@ -28,6 +30,8 @@
 </head>
 <body>
 <div id="strip">
+    <p>Session: <b>{{ session_id }}</b></p>
+
     <button id="next-button">Next</button>
 </div>
 <div id="video-area"></div>
