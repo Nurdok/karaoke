@@ -10,7 +10,7 @@ def make_redis() -> redis.Redis:
         host=os.environ.get("REDIS_HOST", ""),
         port=int(os.environ.get("REDIS_PORT", 0)),
         db=int(os.environ.get("REDIS_DB_ID", 0)),
-        username=os.environ.get("REDIS_USERNAME", ""),
+        username=os.environ.get("REDIS_USERNAME", "default"),
         password=os.environ.get("REDIS_PASSWORD", ""),
         ssl=True,
         ssl_cert_reqs="none",

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 import random
-from typing import Optional
+from typing import Optional, cast
 import logging
 from karaoke.storage import redis_api
 
@@ -19,12 +19,84 @@ class Rating(Enum):
     NEED_THE_MIC = 3
 
 
-@dataclass
 class Song:
-    id: int
-    title: str
-    artist: str
-    video_link: str
+    def __init__(self) -> None:
+        self.id: int = -1
+        self.title: str = ""
+        self.artist: str = ""
+        self.video_link: str = ""
+
+    @classmethod
+    def create(cls, title: str, artist: str, video_link: str) -> "Song":
+        self: Song = cls()
+        self.id = cls.generate_id()
+        self.set_title(title)
+        self.set_artist(artist)
+        self.set_video_link(video_link)
+        return self
+
+    @classmethod
+    def get_song_counter(cls) -> int:
+        counter: Optional[int] = redis_api.get("song:id:counter")
+        if counter is None:
+            raise RuntimeError("Song counter not initialized.")
+        return int(counter)
+
+    @classmethod
+    def generate_id(cls) -> int:
+        return redis_api.incr("song:id:counter")
+
+    @classmethod
+    def get_song_title(cls, song_id: int) -> str:
+        value = redis_api.get(f"song:{song_id}:title")
+        if value is None:
+            raise KeyError(f"Song with id {song_id} not found.")
+        return value.decode("utf-8")
+
+    @classmethod
+    def get_song_artist(cls, song_id: int) -> str:
+        value = redis_api.get(f"song:{song_id}:artist")
+        if value is None:
+            raise KeyError(f"Song with id {song_id} not found.")
+        return value.decode("utf-8")
+
+    @classmethod
+    def get_song_video_link(cls, song_id: int) -> str:
+        value = redis_api.get(f"song:{song_id}:video_link")
+        if value is None:
+            raise KeyError(f"Song with id {song_id} not found.")
+        return value.decode("utf-8")
+
+    @classmethod
+    def find_by_id(cls, song_id: int) -> "Song":
+        self = Song()
+        self.id = song_id
+        self.title = cls.get_song_title(song_id)
+        self.artist = cls.get_song_artist(song_id)
+        self.video_link = cls.get_song_video_link(song_id)
+        return self
+
+    @classmethod
+    def get_all_songs(cls) -> list["Song"]:
+        songs = []
+        for song_id in range(cls.get_song_counter() + 1):
+            try:
+                songs.append(cls.find_by_id(song_id=song_id))
+            except KeyError:
+                pass
+        return songs
+
+    def set_title(self, title: str) -> None:
+        self.title = title
+        redis_api.set(f"song:{self.id}:title", title)
+
+    def set_artist(self, artist: str) -> None:
+        self.artist = artist
+        redis_api.set(f"song:{self.id}:artist", artist)
+
+    def set_video_link(self, video_link: str) -> None:
+        self.video_link = video_link
+        redis_api.set(f"song:{self.id}:video_link", video_link)
 
     def get_score(self, session: "Session") -> int:
         score = 0
@@ -53,22 +125,46 @@ class User:
         return user
 
     @classmethod
+    def get_user_counter(cls) -> int:
+        counter: Optional[int] = redis_api.get("user:id:counter")
+        if counter is None:
+            raise RuntimeError("User counter not initialized.")
+        return int(counter)
+
+    @classmethod
     def generate_id(cls) -> int:
         return redis_api.incr("user:id:counter")
 
     @classmethod
-    def get_user(cls, id: int) -> "User":
-        raise NotImplementedError()
+    def get_user_name(cls, user_id: int) -> str:
+        value = redis_api.get(f"user:{user_id}:name")
+        if value is None:
+            raise KeyError(f"User with id {user_id} does not exist.")
+        return cast(bytes, value).decode("utf-8")
+
+    @classmethod
+    def find_by_id(cls, user_id: int) -> "User":
+        self = cls()
+        self.id = user_id
+        self.name = cls.get_user_name(user_id)
+        return self
 
     @classmethod
     def get_all_users(cls) -> list["User"]:
-        raise NotImplementedError()
+        users = []
+        for user_id in range(cls.get_user_counter() + 1):
+            try:
+                users.append(cls.find_by_id(user_id=user_id))
+            except KeyError:
+                pass
+        return users
 
     def __str__(self) -> str:
         return f"{self.name} ({self.id})"
 
     def set_name(self, name: str) -> None:
         self.name = name
+        redis_api.set(f"user:{self.id}:name", name)
 
     def get_rated_songs(self) -> list[Song]:
         return [rating.song for rating in self.song_ratings]
@@ -89,15 +185,54 @@ class UserSongRating:
 
 
 class Session:
-    def __init__(self, users: list[User], id: Optional[str]):
-        self.id = id
-        self.users = users
-        self.unplayed_songs = self.get_all_songs()
-        self.user_scores = {user: 0 for user in users}
+    def __init__(self) -> None:
+        self.id: str = ""
+        self.users: list[User] = []
+        self.unplayed_songs: list[Song] = []
+        self.user_scores: dict[User, int] = {}
 
     @classmethod
     def create(cls, users: list[User]) -> "Session":
-        return cls(users, cls.generate_id())
+        self: Session = cls()
+        self.id = cls.generate_id()
+        self.set_users(users)
+        return self
+
+    def set_users(self, users: list[User]) -> None:
+        self.users = users
+        for user in users:
+            redis_api.sadd(f"session:id={self.id}:users", user.id)
+        self.unplayed_songs = self.get_all_songs()
+        for song in self.unplayed_songs:
+            redis_api.sadd(f"session:id={self.id}:unplayed_songs", song.id)
+        self.user_scores = {user: 0 for user in users}
+        for user in users:
+            redis_api.set(f"session:id={self.id}:user_scores:{user.id}", 0)
+
+    @classmethod
+    def find_by_id(cls, session_id: str) -> "Session":
+        self: Session = cls()
+        self.id = session_id
+        self.users = [
+            User.find_by_id(int(user_id))
+            for user_id in redis_api.smembers(f"session:id={id}:users")
+        ]
+        self.unplayed_songs = [
+            Song.find_by_id(int(song_id))
+            for song_id in redis_api.smembers(
+                f"session:id={id}:unplayed_songs"
+            )
+        ]
+        self.user_scores = {
+            user: int(
+                cast(
+                    str,
+                    redis_api.get(f"session:id={id}:user_scores:{user.id}"),
+                )
+            )
+            for user in self.users
+        }
+        return self
 
     @staticmethod
     def generate_id() -> str:

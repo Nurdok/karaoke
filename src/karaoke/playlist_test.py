@@ -4,6 +4,9 @@ from unittest.mock import patch, MagicMock
 
 @patch("karaoke.playlist.redis_api")
 def test_get_next_song(mock_redis: MagicMock) -> None:
+    ids = range(100)
+    mock_redis.incr.side_effect = ids
+
     users: list[User] = [
         amir := User.create("Amir"),
         haim := User.create("Haim"),
@@ -12,38 +15,32 @@ def test_get_next_song(mock_redis: MagicMock) -> None:
     ]
 
     songs: list[Song] = [
-        Song(
-            0,
+        Song.create(
             "Non-stop",
             "Cast of Hamilton",
             "https://www.youtube.com/watch?v=6_35a7sn6ds",
         ),
-        Song(
-            1,
+        Song.create(
             "My Shot",
             "Cast of Hamilton",
             "https://www.youtube.com/watch?v=PEHKBckBODQ",
         ),
-        Song(
-            2,
+        Song.create(
             "Unicorn",
             "Noa Kirel",
             "https://www.youtube.com/watch?v=6_35a7sn6ds",
         ),
-        Song(
-            3,
+        Song.create(
             "Weird Korean song",
             "Korean guy",
             "https://www.youtube.com/watch?v=PEHKBckBODQ",
         ),
-        Song(
-            4,
+        Song.create(
             "Seven Rings",
             "Ariana Grande",
             "https://www.youtube.com/watch?v=RubBzkZzpUA",
         ),
-        Song(
-            5,
+        Song.create(
             "Started from the Bottom",
             "Drake",
             "https://www.youtube.com/watch?v=RubBzkZzpUA",
