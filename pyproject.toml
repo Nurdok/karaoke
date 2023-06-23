@@ -16,6 +16,8 @@ pytest = "*"
 [tool.poetry.group.dev.dependencies]
 black = "*"
 mypy = "*"
+types-PyYAML = "*"
+types-redis = "*"
 
 [build-system]
 requires = ["poetry-core"]

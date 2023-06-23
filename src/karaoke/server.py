@@ -3,19 +3,22 @@ import random
 
 app = Flask(__name__)
 
-@app.route('/')
-def index():
-    return render_template('player.html')
 
-@app.route('/next_video')
-def next_video():
+@app.route("/")
+def index() -> str:
+    return render_template("player.html")
+
+
+@app.route("/next_video")
+def next_video() -> str:
     # Perform any necessary logic to determine the next video URL
     youtube_urls = [
         "https://www.youtube.com/embed/NeyIh_uFilY",
     ]
     video_url = random.choice(youtube_urls)
     return video_url
-    #return jsonify({'video_url': video_url})
+    # return jsonify({'video_url': video_url})
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run()

@@ -1,30 +1,56 @@
 from karaoke.playlist import *
+from unittest.mock import patch, MagicMock
 
 
-def test_get_next_song():
+@patch("karaoke.playlist.redis_api")
+def test_get_next_song(mock_redis: MagicMock) -> None:
     users: list[User] = [
-        User(0, "Amir"),
-        User(1, "Haim"),
-        User(2, "Daniel"),
-        User(3, "Twaik"),
+        amir := User.create("Amir"),
+        haim := User.create("Haim"),
+        daniel := User.create("Daniel"),
+        twaik := User.create("Twaik"),
     ]
 
     songs: list[Song] = [
-        Song(0, "Non-stop", "Cast of Hamilton",
-             "https://www.youtube.com/watch?v=6_35a7sn6ds"),
-        Song(1, "My Shot", "Cast of Hamilton",
-             "https://www.youtube.com/watch?v=PEHKBckBODQ"),
-        Song(2, "Unicorn", "Noa Kirel",
-             "https://www.youtube.com/watch?v=6_35a7sn6ds"),
-        Song(3, "Weird Korean song", "Korean guy",
-             "https://www.youtube.com/watch?v=PEHKBckBODQ"),
-        Song(4, "Seven Rings", "Ariana Grande",
-             "https://www.youtube.com/watch?v=RubBzkZzpUA"),
-        Song(5, "Started from the Bottom", "Drake",
-             "https://www.youtube.com/watch?v=RubBzkZzpUA"),
+        Song(
+            0,
+            "Non-stop",
+            "Cast of Hamilton",
+            "https://www.youtube.com/watch?v=6_35a7sn6ds",
+        ),
+        Song(
+            1,
+            "My Shot",
+            "Cast of Hamilton",
+            "https://www.youtube.com/watch?v=PEHKBckBODQ",
+        ),
+        Song(
+            2,
+            "Unicorn",
+            "Noa Kirel",
+            "https://www.youtube.com/watch?v=6_35a7sn6ds",
+        ),
+        Song(
+            3,
+            "Weird Korean song",
+            "Korean guy",
+            "https://www.youtube.com/watch?v=PEHKBckBODQ",
+        ),
+        Song(
+            4,
+            "Seven Rings",
+            "Ariana Grande",
+            "https://www.youtube.com/watch?v=RubBzkZzpUA",
+        ),
+        Song(
+            5,
+            "Started from the Bottom",
+            "Drake",
+            "https://www.youtube.com/watch?v=RubBzkZzpUA",
+        ),
     ]
 
-    users[0].song_ratings = [
+    amir.song_ratings = [
         UserSongRating(songs[0], Rating.NEED_THE_MIC, False, False),
         UserSongRating(songs[1], Rating.NEED_THE_MIC, False, False),
         UserSongRating(songs[2], Rating.SING_ALONG, False, False),
@@ -33,7 +59,7 @@ def test_get_next_song():
         UserSongRating(songs[4], Rating.SING_ALONG, False, False),
     ]
 
-    users[1].song_ratings = [
+    haim.song_ratings = [
         UserSongRating(songs[0], Rating.SING_ALONG, False, False),
         UserSongRating(songs[1], Rating.SING_ALONG, False, False),
         UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
@@ -42,7 +68,7 @@ def test_get_next_song():
         UserSongRating(songs[5], Rating.SING_ALONG, False, False),
     ]
 
-    users[2].song_ratings = [
+    daniel.song_ratings = [
         UserSongRating(songs[0], Rating.SING_ALONG, False, False),
         UserSongRating(songs[1], Rating.CAN_TAKE_THE_MIC, False, False),
         UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
@@ -51,7 +77,7 @@ def test_get_next_song():
         UserSongRating(songs[5], Rating.NEED_THE_MIC, False, False),
     ]
 
-    users[3].song_ratings = [
+    twaik.song_ratings = [
         UserSongRating(songs[0], Rating.SING_ALONG, False, False),
         UserSongRating(songs[1], Rating.SING_ALONG, False, False),
         UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
@@ -60,16 +86,12 @@ def test_get_next_song():
         UserSongRating(songs[5], Rating.DONT_KNOW, False, False),
     ]
 
-    session = Session("ABCD", users)
+    mock_redis.exists.return_value = 0
+    session: Session = Session.create(users)
 
-    playlist: list[Song] = [
-        session.get_next_song(),
-        session.get_next_song(),
-        session.get_next_song(),
-        session.get_next_song(),
-        session.get_next_song(),
-        session.get_next_song(),
-    ]
+    playlist: list[Song] = []
+    while (song := session.get_next_song()) is not None:
+        playlist.append(song)
 
     assert playlist == [
         songs[1],

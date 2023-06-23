@@ -29,9 +29,9 @@ class Song:
     def get_score(self, session: "Session") -> int:
         score = 0
         for user in session.users:
-            for rating in user.ratings:
+            for rating in user.song_ratings:
                 user.get_rating_for_song(self)
-                score += session.get_rating_scores[rating.rating]
+                score += session.get_rating_score(rating.rating)
         return score
 
 
@@ -40,17 +40,20 @@ def format_song_list(songs: list[Song]) -> str:
 
 
 class User:
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
+    def __init__(self) -> None:
+        self.id: int = -1
+        self.name: str = ""
         self.song_ratings: list[UserSongRating] = []
 
     @classmethod
     def create(cls, name: str) -> "User":
-        return cls(cls.generate_id(), name)
+        user: User = cls()
+        user.id = cls.generate_id()
+        user.set_name(name)
+        return user
 
     @classmethod
-    def generate_id(cls) -> str:
+    def generate_id(cls) -> int:
         return redis_api.incr("user:id:counter")
 
     @classmethod
@@ -61,13 +64,16 @@ class User:
     def get_all_users(cls) -> list["User"]:
         raise NotImplementedError()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.id})"
+
+    def set_name(self, name: str) -> None:
+        self.name = name
 
     def get_rated_songs(self) -> list[Song]:
         return [rating.song for rating in self.song_ratings]
 
-    def get_rating_for_song(self, song: Song) -> int:
+    def get_rating_for_song(self, song: Song) -> Rating:
         for rating in self.song_ratings:
             if rating.song == song:
                 return rating.rating
@@ -94,21 +100,22 @@ class Session:
         return cls(users, cls.generate_id())
 
     @staticmethod
-    def generate_id() -> int:
+    def generate_id() -> str:
         letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         exists: bool = True
+        new_id: str = ""
         while exists:
-            new_id: str = "".join(random.choices(letters, k=4))
-            exists = redis_api.exists(f"session:id={new_id}")
+            new_id = "".join(random.choices(letters, k=4))
+            exists = bool(redis_api.exists(f"session:id={new_id}"))
         return new_id
 
-    def get_rating_scores(self) -> dict[Rating, int]:
+    def get_rating_score(self, rating: Rating) -> int:
         return {
             Rating.DONT_KNOW: -1,
             Rating.SING_ALONG: 1,
             Rating.CAN_TAKE_THE_MIC: 2,
             Rating.NEED_THE_MIC: 5,
-        }
+        }[rating]
 
     def get_all_songs(self) -> list[Song]:
         all_songs: dict[int, Song] = {}
@@ -120,15 +127,23 @@ class Session:
     def get_combined_score(self, song: Song) -> int:
         score = 0
         for user in self.users:
-            score += self.get_rating_scores()[user.get_rating_for_song(song)]
+            score += self.get_rating_score(user.get_rating_for_song(song))
         return score
 
-    def prune_candidates_for_user(self, candidates: list[Song], user: User) -> list[Song]:
+    def prune_candidates_for_user(
+        self, candidates: list[Song], user: User
+    ) -> list[Song]:
         logger.info(f"Pruning candidates for {user.name}")
         pruned_candidates: list[Song] = []
-        for rating in [Rating.NEED_THE_MIC, Rating.CAN_TAKE_THE_MIC, Rating.SING_ALONG]:
+        for rating in [
+            Rating.NEED_THE_MIC,
+            Rating.CAN_TAKE_THE_MIC,
+            Rating.SING_ALONG,
+        ]:
             if pruned_candidates:
-                logger.info(f"Pruned candidates: {format_song_list(pruned_candidates)}")
+                logger.info(
+                    f"Pruned candidates: {format_song_list(pruned_candidates)}"
+                )
                 return pruned_candidates
             for song in candidates:
                 if user.get_rating_for_song(song) == rating:
@@ -140,7 +155,9 @@ class Session:
         return candidates
 
     def get_next_song(self) -> Optional[Song]:
-        user_scores_str = ", ".join([f"{u.name}: {s}" for u, s in self.user_scores.items()])
+        user_scores_str = ", ".join(
+            [f"{u.name}: {s}" for u, s in self.user_scores.items()]
+        )
         logger.info(f"Current user scores: {user_scores_str}")
 
         candidates = self.unplayed_songs
@@ -149,36 +166,25 @@ class Session:
             candidates = self.prune_candidates_for_user(candidates, user)
             if len(candidates) == 1:
                 break
-        logger.info(f"Found {len(candidates)} candidates: {format_song_list(candidates)}")
+        logger.info(
+            f"Found {len(candidates)} candidates: {format_song_list(candidates)}"
+        )
 
         if not candidates:
             return None
 
         candidates.sort(key=lambda s: self.get_combined_score(s), reverse=True)
         max_score = self.get_combined_score(candidates[0])
-        candidates = [s for s in candidates if self.get_combined_score(s) == max_score]
-        #picked: Song = random.choice(candidates)
+        candidates = [
+            s for s in candidates if self.get_combined_score(s) == max_score
+        ]
+        # picked: Song = random.choice(candidates)
         picked: Song = candidates[0]  # Not random for testing
         logger.info(f"Picked {picked.title}.")
         logger.info(f"Combined score: {self.get_combined_score(picked)}")
         self.unplayed_songs.remove(picked)
         for user in self.users:
-            self.user_scores[user] += self.get_rating_scores()[user.get_rating_for_song(picked)]
+            self.user_scores[user] += self.get_rating_score(
+                user.get_rating_for_song(picked)
+            )
         return picked
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
