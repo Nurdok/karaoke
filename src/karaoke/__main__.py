@@ -2,6 +2,13 @@ import click
 from karaoke.playlist import *
 
 
+def format_song(song: Song) -> str:
+    return (
+        f"{click.style(song.title, bold=True)} by "
+        f"{click.style(song.artist, bold=True)}"
+    )
+
+
 @click.command()
 @click.option("--user-id", "-u", type=int, help="User ID", multiple=True)
 def start_session(user_id: list[int]) -> None:
@@ -21,7 +28,7 @@ def next_song(session_id: str) -> None:
     if song is None:
         click.echo("No more songs in the queue.")
         return
-    click.echo(f"Next song: {song.title} by {song.artist}")
+    click.echo(f"Next song: {format_song(song)}")
 
 
 @click.command()
@@ -38,7 +45,9 @@ def show_user() -> None:
     user = User.find_by_id(user_id)
     click.echo(f"User {user.id}: {user.name}")
     for song_rating in user.song_ratings:
-        click.echo(f"\t{song_rating.song.title}: {song_rating.rating.name}")
+        click.echo(
+            f"\t{format_song(song_rating.song)}: {song_rating.rating.name}"
+        )
 
 
 @click.command()
@@ -71,11 +80,7 @@ def rate_song(user_id: int) -> None:
     for song in all_songs:
         if song in rated_songs:
             continue
-        click.echo(
-            f"How well do you know the song "
-            f"{click.style(song.title, bold=True)} by "
-            f"{click.style(song.artist, bold=True)}?"
-        )
+        click.echo(f"How well do you know the song {format_song(song)}?")
         for score, rating in sorted(ratings.items()):
             click.echo(f"{score}: {rating_names[rating]}")
         score = click.prompt("Score", type=int)
@@ -103,9 +108,7 @@ def list_songs() -> None:
     all_songs = Song.get_all_songs()
     click.echo(f"Found {len(all_songs)} songs:")
     for song in all_songs:
-        click.echo(
-            f"{song.id}: {click.style(song.title, bold=True)} by {song.artist}"
-        )
+        click.echo(f"{song.id}: {format_song(song)}")
 
 
 @click.group()
