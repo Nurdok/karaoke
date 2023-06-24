@@ -36,6 +36,12 @@ class Song:
 
     @classmethod
     def create(cls, title: str, artist: str, video_link: str) -> "Song":
+        all_songs = cls.get_all_songs()
+        for song in all_songs:
+            if song.title == title and song.artist == artist:
+                logger.info("Song already exists, returning existing song.")
+                return song
+
         self: Song = cls()
         self.id = cls.generate_id()
         self.set_title(title)
@@ -191,6 +197,10 @@ class User:
 
     def get_rated_songs(self) -> list[Song]:
         return [rating.song for rating in self.song_ratings]
+
+    def get_unrated_songs(self) -> list[Song]:
+        songs = Song.get_all_songs()
+        return [song for song in songs if song not in self.get_rated_songs()]
 
     def get_rating_for_song(self, song: Song) -> Rating:
         for rating in self.song_ratings:

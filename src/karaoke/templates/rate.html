@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Song Rating</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .song-container {
+            margin: 50px auto;
+            width: 400px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .rating-buttons {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .rating-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="song-container">
+    <h2>Song Rating</h2>
+    <p id="song-title">Loading...</p>
+    <p id="song-artist"></p>
+    <p id="song-id" style="visibility: hidden"></p>
+    <div class="rating-buttons">
+        <button class="rating-button" onclick="rateSong(1)">I don't know this song</button>
+        <button class="rating-button" onclick="rateSong(2)">I can sing along</button>
+        <button class="rating-button" onclick="rateSong(3)">I can take the mic</button>
+        <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('keydown', function (event) {
+        switch (event.key) {
+            case '1':
+                rateSong(1);
+                break;
+            case '2':
+                rateSong(2);
+                break;
+            case '3':
+                rateSong(3);
+                break;
+            case '4':
+                rateSong(4);
+                break;
+        }
+    });
+
+    function rateSong(rating) {
+        var userId = '{{ user_id }}';
+
+        var data = {
+            userId: userId,
+            songId:
+            rating: rating
+        };
+
+        fetch('/rate-song', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+                .then(response => {
+                    if (response.ok) {
+                        getNextSong();
+                    } else {
+                        console.error('Error rating song:', response.status);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error rating song:', error);
+                });
+    }
+
+    function getNextSong() {
+        fetch('/next_song')
+                .then(response => response.json())
+                .then(song => {
+                    document.getElementById('song-title').textContent = song.song_title;
+                    document.getElementById('song-artist').textContent = song.song_artist;
+                    document.getElementById('song-id').textContent = song.song_id;
+                })
+                .catch(error => {
+                    console.error('Error fetching next song:', error);
+                });
+    }
+
+    // Initial request to get the first song
+    getNextSong();
+</script>
+</body>
+</html>
