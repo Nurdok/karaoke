@@ -1,3 +1,6 @@
+import datetime
+import json
+
 from flask import Flask, render_template, jsonify, request, Response
 from karaoke.playlist import Session, Song, User, Rating
 from typing import Optional
@@ -27,13 +30,16 @@ def next_video() -> str:
     # return jsonify({'video_url': video_url})
 
 
-@app.route("/next_song")
+@app.route("/next-unrated-song")
 def next_song() -> Response:
     user_id: int = int(request.args.get("u", -1))
     if user_id == -1:
         return Response(status=400)
     user: User = User.find_by_id(user_id)
+    start: datetime.datetime = datetime.datetime.now()
     songs: list[Song] = user.get_unrated_songs()
+    end: datetime.datetime = datetime.datetime.now()
+    logger.info(f"Found {len(songs)} unrated songs in {end - start}")
     if songs:
         song = songs[0]
         return jsonify(
@@ -47,11 +53,13 @@ def next_song() -> Response:
     return Response(status=404)
 
 
-@app.route("/rate_song", methods=["POST"])
+@app.route("/rate-song", methods=["POST"])
 def rate_song() -> Response:
-    user_id: int = int(request.form.get("u", -1))
-    song_id: int = int(request.form.get("s", -1))
-    rating: str = request.form.get("r", "")
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    print(data)
+    user_id: int = int(data.get("userId", -1))
+    song_id: int = int(data.get("songId", -1))
+    rating: str = data.get("rating", "")
     if user_id == -1 or song_id == -1 or rating == "":
         return Response(status=400)
     user: User = User.find_by_id(user_id)
@@ -61,8 +69,10 @@ def rate_song() -> Response:
 
 
 @app.route("/rate")
-def rate() -> str:
-    user_id: int = int(request.form.get("u", -1))
+def rate() -> Response | str:
+    user_id: int = int(request.args.get("u", -1))
+    if user_id == -1:
+        return Response(status=400)
     return render_template("rate.html", user_id=user_id)
 
 

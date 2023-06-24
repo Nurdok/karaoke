@@ -70,10 +70,26 @@
     function rateSong(rating) {
         var userId = '{{ user_id }}';
 
+        var rating_string = '';
+        switch (rating) {
+            case 1:
+                rating_string = 'DONT_KNOW';
+                break;
+            case 2:
+                rating_string = 'SING_ALONG';
+                break;
+            case 3:
+                rating_string = 'CAN_TAKE_THE_MIC';
+                break;
+            case 4:
+                rating_string = 'NEED_THE_MIC';
+                break;
+        }
+
         var data = {
             userId: userId,
-            songId:
-            rating: rating
+            songId: document.getElementById('song-id').textContent,
+            rating: rating_string
         };
 
         fetch('/rate-song', {
@@ -96,7 +112,7 @@
     }
 
     function getNextSong() {
-        fetch('/next_song')
+        fetch('/next-unrated-song?u={{ user_id }}')
                 .then(response => response.json())
                 .then(song => {
                     document.getElementById('song-title').textContent = song.song_title;
