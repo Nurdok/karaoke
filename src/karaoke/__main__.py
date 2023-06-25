@@ -45,9 +45,8 @@ def show_user() -> None:
     user = User.find_by_id(user_id)
     click.echo(f"User {user.id}: {user.name}")
     for song_rating in user.song_ratings:
-        click.echo(
-            f"\t{format_song(song_rating.song)}: {song_rating.rating.name}"
-        )
+        song: Song = Song.find_by_id(song_rating.song_id)
+        click.echo(f"\t{format_song(song)}: {song_rating.rating.name}")
 
 
 @click.command()
@@ -75,16 +74,12 @@ def rate_song(user_id: int) -> None:
         Rating.NEED_THE_MIC: "I NEED the mic!",
     }
 
-    all_songs = Song.get_all_songs()
-    rated_songs = [sr.song for sr in user.song_ratings]
-    for song in all_songs:
-        if song in rated_songs:
-            continue
+    while (song := user.get_any_unrated_song()) is not None:
         click.echo(f"How well do you know the song {format_song(song)}?")
         for score, rating in sorted(ratings.items()):
             click.echo(f"{score}: {rating_names[rating]}")
         score = click.prompt("Score", type=int)
-        user.rate_song(song, rating=ratings[score])
+        user.rate_song(song.id, rating=ratings[score])
         click.echo()
 
     click.echo("All songs rated!")

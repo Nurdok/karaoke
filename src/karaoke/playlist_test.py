@@ -48,39 +48,39 @@ def test_get_next_song(mock_redis: MagicMock) -> None:
     ]
 
     amir.song_ratings = [
-        UserSongRating(songs[0], Rating.NEED_THE_MIC, False, False),
-        UserSongRating(songs[1], Rating.NEED_THE_MIC, False, False),
-        UserSongRating(songs[2], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[3], Rating.DONT_KNOW, False, False),
-        UserSongRating(songs[4], Rating.DONT_KNOW, False, False),
-        UserSongRating(songs[4], Rating.SING_ALONG, False, False),
+        UserSongRating(songs[0].id, Rating.NEED_THE_MIC, False, False),
+        UserSongRating(songs[1].id, Rating.NEED_THE_MIC, False, False),
+        UserSongRating(songs[2].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[3].id, Rating.DONT_KNOW, False, False),
+        UserSongRating(songs[4].id, Rating.DONT_KNOW, False, False),
+        UserSongRating(songs[4].id, Rating.SING_ALONG, False, False),
     ]
 
     haim.song_ratings = [
-        UserSongRating(songs[0], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[1], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[3], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[4], Rating.NEED_THE_MIC, False, False),
-        UserSongRating(songs[5], Rating.SING_ALONG, False, False),
+        UserSongRating(songs[0].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[1].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[2].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[3].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[4].id, Rating.NEED_THE_MIC, False, False),
+        UserSongRating(songs[5].id, Rating.SING_ALONG, False, False),
     ]
 
     daniel.song_ratings = [
-        UserSongRating(songs[0], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[1], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[3], Rating.DONT_KNOW, False, False),
-        UserSongRating(songs[4], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[5], Rating.NEED_THE_MIC, False, False),
+        UserSongRating(songs[0].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[1].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[2].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[3].id, Rating.DONT_KNOW, False, False),
+        UserSongRating(songs[4].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[5].id, Rating.NEED_THE_MIC, False, False),
     ]
 
     twaik.song_ratings = [
-        UserSongRating(songs[0], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[1], Rating.SING_ALONG, False, False),
-        UserSongRating(songs[2], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[3], Rating.NEED_THE_MIC, True, False),
-        UserSongRating(songs[4], Rating.CAN_TAKE_THE_MIC, False, False),
-        UserSongRating(songs[5], Rating.DONT_KNOW, False, False),
+        UserSongRating(songs[0].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[1].id, Rating.SING_ALONG, False, False),
+        UserSongRating(songs[2].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[3].id, Rating.NEED_THE_MIC, True, False),
+        UserSongRating(songs[4].id, Rating.CAN_TAKE_THE_MIC, False, False),
+        UserSongRating(songs[5].id, Rating.DONT_KNOW, False, False),
     ]
 
     mock_redis.exists.return_value = 0

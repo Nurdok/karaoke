@@ -13,9 +13,13 @@
             width: 400px;
         }
 
-        h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
+        h1 {
+            margin-bottom: 0;
+        }
+
+        h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
         }
 
         p {
@@ -38,9 +42,9 @@
 </head>
 <body>
 <div class="song-container">
-    <p>{{ userName }}, How well do you know this song?</p>
-    <h2 id="song-title">Loading...</h2>
-    <h2 id="song-artist"></h2>
+    <p>{{ user.name }}, How well do you know this song?</p>
+    <h1 id="song-title">Loading...</h1>
+    <h3 id="song-artist"></h3>
     <p id="song-id" style="visibility: hidden"></p>
     <div class="rating-buttons">
         <button class="rating-button" onclick="rateSong(1)">I don't know this song<br/>(1)</button>
@@ -69,7 +73,7 @@
     });
 
     function rateSong(rating) {
-        var userId = '{{ user_id }}';
+        var userId = '{{ user.id }}';
 
         var rating_string = '';
         switch (rating) {
@@ -113,7 +117,7 @@
     }
 
     function getNextSong() {
-        fetch('/next-unrated-song?u={{ user_id }}')
+        fetch('/next-unrated-song?u={{ user.id }}')
                 .then(response => response.json())
                 .then(song => {
                     document.getElementById('song-title').textContent = song.song_title;

@@ -31,26 +31,25 @@ def next_video() -> str:
 
 
 @app.route("/next-unrated-song")
-def next_song() -> Response:
+def next_unrated_song() -> Response:
     user_id: int = int(request.args.get("u", -1))
     if user_id == -1:
         return Response(status=400)
     user: User = User.find_by_id(user_id)
     start: datetime.datetime = datetime.datetime.now()
-    songs: list[Song] = user.get_unrated_songs()
+    song: Optional[Song] = user.get_any_unrated_song()
     end: datetime.datetime = datetime.datetime.now()
-    logger.info(f"Found {len(songs)} unrated songs in {end - start}")
-    if songs:
-        song = songs[0]
-        return jsonify(
-            {
-                "song_id": song.id,
-                "song_title": song.title,
-                "song_artist": song.artist,
-            }
-        )
+    print(f"Time to get next unrated song: {end - start}")
+    if song is None:
+        return Response(status=404)
 
-    return Response(status=404)
+    return jsonify(
+        {
+            "song_id": song.id,
+            "song_title": song.title,
+            "song_artist": song.artist,
+        }
+    )
 
 
 @app.route("/rate-song", methods=["POST"])
@@ -64,7 +63,7 @@ def rate_song() -> Response:
         return Response(status=400)
     user: User = User.find_by_id(user_id)
     song: Song = Song.find_by_id(song_id)
-    user.rate_song(song, Rating[rating])
+    user.rate_song(song.id, Rating[rating])
     return Response(status=200)
 
 
@@ -73,7 +72,8 @@ def rate() -> Response | str:
     user_id: int = int(request.args.get("u", -1))
     if user_id == -1:
         return Response(status=400)
-    return render_template("rate.html", user_id=user_id)
+    user: User = User.find_by_id(user_id)
+    return render_template("rate.html", user=user)
 
 
 if __name__ == "__main__":
