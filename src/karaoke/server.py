@@ -62,8 +62,7 @@ def rate_song() -> Response:
     if user_id == -1 or song_id == -1 or rating == "":
         return Response(status=400)
     user: User = User.find_by_id(user_id)
-    song: Song = Song.find_by_id(song_id)
-    user.rate_song(song.id, Rating[rating])
+    user.rate_song(song_id, Rating[rating])
     return Response(status=200)
 
 
