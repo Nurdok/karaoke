@@ -26,6 +26,7 @@
         .rating-buttons {
             display: flex;
             justify-content: space-between;
+            column-gap: 5px;
         }
 
         .rating-button {
@@ -37,15 +38,15 @@
 </head>
 <body>
 <div class="song-container">
-    <h2>Song Rating</h2>
-    <p id="song-title">Loading...</p>
-    <p id="song-artist"></p>
+    <p>{{ userName }}, How well do you know this song?</p>
+    <h2 id="song-title">Loading...</h2>
+    <h2 id="song-artist"></h2>
     <p id="song-id" style="visibility: hidden"></p>
     <div class="rating-buttons">
-        <button class="rating-button" onclick="rateSong(1)">I don't know this song</button>
-        <button class="rating-button" onclick="rateSong(2)">I can sing along</button>
-        <button class="rating-button" onclick="rateSong(3)">I can take the mic</button>
-        <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC</button>
+        <button class="rating-button" onclick="rateSong(1)">I don't know this song<br/>(1)</button>
+        <button class="rating-button" onclick="rateSong(2)">I can sing along<br/>(2)</button>
+        <button class="rating-button" onclick="rateSong(3)">I can take the mic<br/>(3)</button>
+        <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC<br/>(4)</button>
     </div>
 </div>
 
