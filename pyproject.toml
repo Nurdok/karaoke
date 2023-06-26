@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.11"
 flask = "*"
 redis = "*"
+sqlalchemy = "*"
 
 [tool.poetry.group.test.dependencies]
 pytest = "*"
