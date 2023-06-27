@@ -1,12 +1,16 @@
 import click
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from karaoke.user import User
-from karaoke.song import Song
-from karaoke.rating import UserSongRating, Rating
-from karaoke.session import Session, SessionSong, SessionUser
+from karaoke.core.user import User
+from karaoke.core.song import Song
+from karaoke.core.rating import UserSongRating, Rating
+from karaoke.core.session import Session, SessionSong, SessionUser
+from karaoke.core.base import Base
+
+
+LOCAL_DB = "sqlite:///karaoke.sqlite"
 
 
 def format_song(song: Song) -> str:
@@ -17,29 +21,44 @@ def format_song(song: Song) -> str:
 
 
 @click.command()
+def _init_db() -> None:
+    engine = create_engine(LOCAL_DB, echo=True)
+    Base.metadata.create_all(engine)
+    click.echo("Initialized database.")
+
+
+@click.command()
 def _create_user() -> None:
-    engine = create_engine("sqlite://", echo=True)
-    with Session(engine) as session:
+    engine = create_engine(LOCAL_DB, echo=True)
+    with sessionmaker(bind=engine)() as session:
         name = click.prompt("Name")
-        user = User(name="name")
+        user = User(name=name)
         session.add(user)
         session.commit()
         click.echo(f"User created with ID {user.id}")
 
 
 @click.group()
-def cli() -> None:
+def _cli() -> None:
     pass
 
 
 @click.group()
-def user() -> None:
+def _db() -> None:
     pass
 
 
-cli.add_command(user, name="user")
-user.add_command(_create_user, name="create")
+@click.group()
+def _user() -> None:
+    pass
+
+
+_cli.add_command(_db, name="db")
+_db.add_command(_init_db, name="init")
+
+_cli.add_command(_user, name="user")
+_user.add_command(_create_user, name="create")
 
 
 if __name__ == "__main__":
-    cli()
+    _cli()

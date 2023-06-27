@@ -2,7 +2,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String
 
 
-from karaoke.base import Base
+from karaoke.core.base import Base
 
 
 class Song(Base):
@@ -11,3 +11,4 @@ class Song(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
     artist: Mapped[str] = mapped_column(String(100))
+    video_link: Mapped[str] = mapped_column(String(500))

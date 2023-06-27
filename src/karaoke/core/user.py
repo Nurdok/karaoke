@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import String
 
-from karaoke.base import Base
+from karaoke.core.base import Base
 
 
 class User(Base):

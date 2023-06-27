@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey, String, Integer, Column, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
 
-from karaoke.base import Base
+from karaoke.core.base import Base
 
 
 session_user_association_table = Table(

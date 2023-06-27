@@ -2,7 +2,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum
 
-from karaoke.base import Base
+from karaoke.core.base import Base
 
 
 class Rating(Enum):

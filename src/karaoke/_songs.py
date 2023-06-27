@@ -1,4 +1,7 @@
-from karaoke.playlist import *
+from karaoke.core.song import Song
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from karaoke.cli import LOCAL_DB
 
 songs = [
     ("You'll Be Back", "Hamilton", "NeyIh_uFilY"),
@@ -339,9 +342,19 @@ songs = [
     ("Love is an open door", "Unknown", "IWw-LQ2qM3c"),
 ]
 
-for songtup in songs:
-    Song.create(
-        title=songtup[0],
-        artist=songtup[1],
-        video_link=f"https://www.youtube.com/embed/{songtup[2]}",
-    )
+
+def main():
+    engine = create_engine(LOCAL_DB, echo=True)
+    with sessionmaker(bind=engine)() as session:
+        for songtup in songs:
+            song = Song(
+                title=songtup[0],
+                artist=songtup[1],
+                video_link=f"https://www.youtube.com/embed/{songtup[2]}",
+            )
+            session.add(song)
+        session.commit()
+
+
+if __name__ == "__main__":
+    main()
