@@ -5,6 +5,9 @@ description = ""
 authors = ["Amir Rachum <amir@rachum.com>"]
 readme = "README.md"
 
+[tool.poetry.scripts]
+kr = "karaoke.cli:main"
+
 [tool.poetry.dependencies]
 python = "^3.11"
 flask = "*"
