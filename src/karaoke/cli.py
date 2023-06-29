@@ -65,7 +65,7 @@ def _list_users() -> None:
 @click.command()
 @click.option("--user-id", "-u", type=int, help="User ID")
 def _rate_song(user_id: int) -> None:
-    engine = create_engine(LOCAL_DB, echo=ECHO)
+    engine = create_engine(LOCAL_DB, echo=True)
     with sessionmaker(bind=engine)() as session:
         user: Optional[User] = (
             session.query(User).filter_by(id=user_id).first()
@@ -87,13 +87,30 @@ def _rate_song(user_id: int) -> None:
             Rating.NEED_THE_MIC: "I NEED the mic!",
         }
 
-        while (
-            unrated_song := (
-                session.query(Song)
-                .outerjoin(KaraokeSessionSong)
-                .where(KaraokeSessionSong.song_id == None)
-                .first()
+        print(
+            session.query(Song)
+            .outerjoin(
+                user_ratings := (
+                    session.query(UserSongRating)
+                    .filter_by(user_id=user_id)
+                    .subquery()
+                )
             )
+            .filter(user_ratings.c.song_id.is_(None))
+            .all()
+        )
+
+        while (
+            unrated_song := session.query(Song)
+            .outerjoin(
+                user_ratings := (
+                    session.query(UserSongRating)
+                    .filter_by(user_id=user_id)
+                    .subquery()
+                )
+            )
+            .filter(user_ratings.c.song_id.is_(None))
+            .first()
         ) is not None:
             click.echo(f"How well do you know this song?")
             click.echo(format_song(unrated_song))

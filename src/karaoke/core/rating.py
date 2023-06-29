@@ -22,3 +22,6 @@ class UserSongRating(Base):
         ForeignKey("song.id"), primary_key=True
     )
     rating: Mapped[Rating] = mapped_column()
+
+    def __repr__(self) -> str:
+        return f"UserSongRating(user_id={self.user_id}, song_id={self.song_id}, rating={self.rating})"
