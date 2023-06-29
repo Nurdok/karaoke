@@ -2,9 +2,14 @@ import datetime
 import json
 
 from flask import Flask, render_template, jsonify, request, Response
-from karaoke.playlist import Session, Song, User, Rating
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from karaoke.core.session import KaraokeSession
+from karaoke.core.song import Song
 from typing import Optional
 import logging
+
+LOCAL_DB = "sqlite:///karaoke.sqlite"
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +26,25 @@ def index() -> str:
 def next_video() -> str:
     session_id: str = request.args.get("s", "")
     logger.info(f"Getting next video for session {session_id}")
-    session: Session = Session.find_by_id(session_id)
-    logger.info(f"Session user scores: {session.user_scores}")
-    song: Optional[Song] = session.get_next_song()
-    if song is None:
-        return "https://www.youtube.com/embed/T1XgFsitnQw"
-    return song.video_link
-    # return jsonify({'video_url': video_url})
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_id)
+            .first()
+        )
+        if karaoke_session is None:
+            return ""
+
+        song: Optional[Song] = karaoke_session.get_next_song(session)
+        if song is None:
+            return "https://www.youtube.com/embed/T1XgFsitnQw"
+
+        if not song.video_link.startswith("http"):
+            return f"https://www.youtube.com/embed/{song.video_link}"
+
+        return song.video_link
 
 
 @app.route("/next-unrated-song")
