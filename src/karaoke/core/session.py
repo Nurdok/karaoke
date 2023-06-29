@@ -1,4 +1,5 @@
 from sqlalchemy import ForeignKey, String, select
+from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from enum import Enum
 import random
@@ -22,6 +23,9 @@ class KaraokeSessionUser(Base):
     )
     score: Mapped[int] = mapped_column(default=0)
 
+    def __repr__(self) -> str:
+        return f"KaraokeSessionUser(karaoke_session_id={self.karaoke_session_id}, user_id={self.user_id}, score={self.score})"
+
 
 class KaraokeSessionSong(Base):
     __tablename__ = "karaoke_session_song"
@@ -32,6 +36,7 @@ class KaraokeSessionSong(Base):
     song_id: Mapped[int] = mapped_column(
         ForeignKey("song.id"), primary_key=True
     )
+    song: Mapped[Song] = relationship()
     played: Mapped[bool] = mapped_column()
 
 
@@ -60,16 +65,33 @@ class KaraokeSession(Base):
 
     def generate_song_queue(self, session: Session):
         user_ids = [user.user_id for user in self.users]
-        result = session.execute(
-            select(Song).where(
+
+        songs = (
+            session.query(Song)
+            .where(
                 Song.id.in_(
                     select(UserSongRating.song_id)
                     .select_from(UserSongRating)
                     .where(UserSongRating.user_id.in_(user_ids))
                 )
             )
+            .all()
         )
-        logger.info(result.all())
 
-    # def get_next_song(self, session: Session):
-    # self.songs.filter(played=False)
+        for song in songs:
+            kss = KaraokeSessionSong(
+                karaoke_session_id=self.id, song_id=song.id, played=False
+            )
+            self.songs.append(kss)
+            session.add(kss)
+
+        session.commit()
+
+    def get_next_song(self, session: Session) -> Optional[Song]:
+        for ksong in self.songs:
+            if not ksong.played:
+                ksong.played = True
+                session.commit()
+                return ksong.song
+
+        return None

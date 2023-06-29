@@ -4,6 +4,7 @@ import click
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from karaoke.core.utils import get_any_unrated_song
 from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.rating import UserSongRating, Rating
@@ -90,16 +91,9 @@ def _rate_song(user_id: int) -> None:
         user_name = user.name
 
         while (
-            unrated_song := session.query(Song)
-            .outerjoin(
-                user_ratings := (
-                    session.query(UserSongRating)
-                    .filter_by(user_id=user_id)
-                    .subquery()
-                )
+            unrated_song := get_any_unrated_song(
+                session=session, user_id=user_id
             )
-            .filter(user_ratings.c.song_id.is_(None))
-            .first()
         ) is not None:
             click.echo(f"{user_name}, how well do you know this song?")
             click.echo(format_song(unrated_song))
@@ -166,18 +160,36 @@ def _create_session(user_id: list[int]) -> None:
 
 
 @click.command()
+def _list_sessions() -> None:
+    engine = create_engine(LOCAL_DB, echo=ECHO)
+    with sessionmaker(bind=engine)() as session:
+        all_karaoke_sessions = session.query(KaraokeSession).all()
+        click.echo(f"Found {len(all_karaoke_sessions)} sessions:")
+        for ksession in all_karaoke_sessions:
+            user_names = ", ".join(
+                user.name
+                for user in session.query(User)
+                .filter(User.id.in_(kuser.user_id for kuser in ksession.users))
+                .all()
+            )
+            click.echo(f"{ksession.display_id}: {user_names}")
+
+
+@click.command()
 @click.option("--session-id", "-s", type=str, help="Session ID")
-def next_song(session_id: str) -> None:
+def _next_song(session_id: str) -> None:
     engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         karaoke_session = (
-            session.query(KaraokeSession).filter(display_id=session_id).first()
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_id)
+            .first()
         )
         if karaoke_session is None:
             click.echo("Session not found")
             return
 
-        song: Optional[Song] = karaoke_session.get_next_song()
+        song: Optional[Song] = karaoke_session.get_next_song(session)
         if song is None:
             click.echo("No more songs in the queue.")
             return
@@ -223,6 +235,8 @@ _song.add_command(_list_songs, name="list")
 
 _cli.add_command(_session, name="session")
 _session.add_command(_create_session, name="create")
+_session.add_command(_list_sessions, name="list")
+_session.add_command(_next_song, name="next")
 
 
 def main():

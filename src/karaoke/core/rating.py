@@ -1,8 +1,9 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, Session
 from enum import Enum
 
 from karaoke.core.base import Base
+from karaoke.core.song import Song
 
 
 class Rating(Enum):
