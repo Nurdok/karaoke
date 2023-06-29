@@ -55,7 +55,7 @@ class KaraokeSession(Base):
         String(4), nullable=True, unique=True
     )
     users: Mapped[list[KaraokeSessionUser]] = relationship()
-    songs: Mapped[list[KaraokeSessionSong]] = relationship(lazy="dynamic")
+    songs: Mapped[list[KaraokeSessionSong]] = relationship()
 
     def generate_display_id(self, session: Session) -> None:
         display_id = generate_id()
@@ -145,14 +145,11 @@ class KaraokeSession(Base):
         return score
 
     def get_next_song(self, session: Session) -> Optional[Song]:
-        candidates: list[KaraokeSessionSong] = self.songs.filter_by(
-            played=False
-        ).all()
-        user_scores: dict[User, int] = {
-            user.user: user.score for user in self.users
-        }
-        sorted_users: list[User] = sorted(
-            user_scores.keys(), key=user_scores.get
+        candidates: list[KaraokeSessionSong] = [
+            song for song in self.songs if not song.played
+        ]
+        sorted_users: list[KaraokeSessionUser] = sorted(
+            self.users, key=lambda user: user.score
         )
 
         logger.info(
@@ -163,7 +160,7 @@ class KaraokeSession(Base):
             return None
 
         for user in sorted_users:
-            candidates = self.prune_candidates_for_user(candidates, user)
+            candidates = self.prune_candidates_for_user(candidates, user.user)
             if len(candidates) == 1:
                 logger.info(f"Left with one candidate, stopping.")
                 break

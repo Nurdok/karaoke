@@ -3,6 +3,10 @@ from sqlalchemy import String
 
 
 from karaoke.core.base import Base
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from karaoke.core.rating import UserSongRating
 
 
 class Song(Base):
@@ -16,5 +20,10 @@ class Song(Base):
         back_populates="song"
     )
 
-    def __repr__(self):
-        return f"Song(id={self.id}, title={self.title}, artist={self.artist}, video_link={self.video_link})"
+    def __repr__(self) -> str:
+        return (
+            f"Song(id={self.id}, "
+            f"title={self.title}, "
+            f"artist={self.artist}, "
+            f"video_link={self.video_link})"
+        )

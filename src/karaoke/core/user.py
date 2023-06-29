@@ -3,6 +3,11 @@ from sqlalchemy import String
 
 from karaoke.core.base import Base
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from karaoke.core.rating import UserSongRating
+
 
 class User(Base):
     __tablename__ = "user_account"

@@ -4,7 +4,7 @@ import click
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from karaoke.core.utils import get_any_unrated_song
+from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
 from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.rating import UserSongRating, Rating
@@ -143,19 +143,9 @@ def _list_songs() -> None:
 def _create_session(user_id: list[int]) -> None:
     engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
-        karaoke_session = KaraokeSession()
-        karaoke_session.generate_display_id(session)
-        session.add(karaoke_session)
-        session.commit()
-
-        for uid in user_id:
-            session_user = KaraokeSessionUser(
-                karaoke_session_id=karaoke_session.id, user_id=uid
-            )
-            session.add(session_user)
-
-        session.commit()
-        karaoke_session.generate_song_queue(session)
+        karaoke_session = create_karaoke_session(
+            session=session, user_ids=user_id
+        )
         click.echo(f"Session created with ID {karaoke_session.display_id}")
 
 
