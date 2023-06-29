@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from karaoke.core.song import Song
 from karaoke.core.rating import UserSongRating
 

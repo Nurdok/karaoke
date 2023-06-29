@@ -113,7 +113,7 @@ def _rate_song(user_id: int) -> None:
 @click.option("--title", "-t", type=str, help="Title")
 @click.option("--artist", "-a", type=str, help="Artist")
 @click.option("--video-link", "-l", type=str, help="Video Link")
-def _create_song(title, artist, video_link) -> None:
+def _create_song(title: str, artist: str, video_link: str) -> None:
     engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         if title is None:
@@ -239,7 +239,7 @@ _session.add_command(_list_sessions, name="list")
 _session.add_command(_next_song, name="next")
 
 
-def main():
+def main() -> None:
     _cli()
 
 

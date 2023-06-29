@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String
 
 
@@ -12,6 +12,9 @@ class Song(Base):
     title: Mapped[str] = mapped_column(String(100))
     artist: Mapped[str] = mapped_column(String(100))
     video_link: Mapped[str] = mapped_column(String(500))
+    ratings: Mapped[list["UserSongRating"]] = relationship(
+        back_populates="song"
+    )
 
     def __repr__(self):
         return f"Song(id={self.id}, title={self.title}, artist={self.artist}, video_link={self.video_link})"

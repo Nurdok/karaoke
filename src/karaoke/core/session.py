@@ -6,8 +6,9 @@ import random
 import logging
 
 from karaoke.core.base import Base
-from karaoke.core.rating import UserSongRating
+from karaoke.core.rating import UserSongRating, Rating
 from karaoke.core.song import Song
+from karaoke.core.user import User
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class KaraokeSessionUser(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("user_account.id"), primary_key=True
     )
+    user: Mapped[User] = relationship()
     score: Mapped[int] = mapped_column(default=0)
 
     def __repr__(self) -> str:
@@ -53,9 +55,9 @@ class KaraokeSession(Base):
         String(4), nullable=True, unique=True
     )
     users: Mapped[list[KaraokeSessionUser]] = relationship()
-    songs: Mapped[list[KaraokeSessionSong]] = relationship()
+    songs: Mapped[list[KaraokeSessionSong]] = relationship(lazy="dynamic")
 
-    def generate_display_id(self, session: Session):
+    def generate_display_id(self, session: Session) -> None:
         display_id = generate_id()
         all_sessions = session.query(KaraokeSession).all()
         all_display_ids = [ks.display_id for ks in all_sessions]
@@ -63,7 +65,7 @@ class KaraokeSession(Base):
             display_id = generate_id()
         self.display_id = display_id
 
-    def generate_song_queue(self, session: Session):
+    def generate_song_queue(self, session: Session) -> None:
         user_ids = [user.user_id for user in self.users]
 
         songs = (
@@ -87,11 +89,113 @@ class KaraokeSession(Base):
 
         session.commit()
 
-    def get_next_song(self, session: Session) -> Optional[Song]:
-        for ksong in self.songs:
-            if not ksong.played:
-                ksong.played = True
-                session.commit()
-                return ksong.song
+    def prune_candidates_for_user(
+        self, candidates: list[KaraokeSessionSong], user: User
+    ) -> list[KaraokeSessionSong]:
+        logger.info(f"Pruning {len(candidates)} candidates for {user.name}")
+        logger.info(f"\t{user.name} has {len(user.ratings)} ratings")
+        pruned_candidates: list[KaraokeSessionSong] = []
+        user_ratings = {
+            song_rating.song.id: song_rating.rating
+            for song_rating in user.ratings
+        }
+        for rating in [
+            Rating.NEED_THE_MIC,
+            Rating.CAN_TAKE_THE_MIC,
+            Rating.SING_ALONG,
+        ]:
+            logger.info(f"\tSearching for rating {rating}")
+            for song in candidates:
+                if user_ratings.get(song.song.id, Rating.DONT_KNOW) == rating:
+                    logger.info(
+                        f"\t\tMatched: {song.song.title} by {song.song.artist}"
+                    )
+                    pruned_candidates.append(song)
 
-        return None
+            if pruned_candidates:
+                if len(pruned_candidates) == len(candidates):
+                    logger.info(f"\tAll songs matched, not pruning.")
+                return pruned_candidates
+            else:
+                logger.info(f"\t\tNo songs found with rating {rating}")
+
+        # This user wouldn't benefit from any of the candidates, so we'll
+        # just return the original list
+        logger.info(
+            f"\t{user.name} doesn't know any of the candidates, not pruning."
+        )
+        return candidates
+
+    def get_rating_score(self, rating: Rating) -> int:
+        return {
+            Rating.DONT_KNOW: -1,
+            Rating.SING_ALONG: 1,
+            Rating.CAN_TAKE_THE_MIC: 2,
+            Rating.NEED_THE_MIC: 5,
+        }[rating]
+
+    def get_combined_score(self, song: KaraokeSessionSong) -> int:
+        score = 0
+        for user in self.users:
+            score += self.get_rating_score(
+                {
+                    rating.user: rating.rating for rating in song.song.ratings
+                }.get(user.user, Rating.DONT_KNOW)
+            )
+        return score
+
+    def get_next_song(self, session: Session) -> Optional[Song]:
+        candidates: list[KaraokeSessionSong] = self.songs.filter_by(
+            played=False
+        ).all()
+        user_scores: dict[User, int] = {
+            user.user: user.score for user in self.users
+        }
+        sorted_users: list[User] = sorted(
+            user_scores.keys(), key=user_scores.get
+        )
+
+        logger.info(
+            f"Getting next song from {len(candidates)} remaining unplayed songs"
+        )
+
+        if not candidates:
+            return None
+
+        for user in sorted_users:
+            candidates = self.prune_candidates_for_user(candidates, user)
+            if len(candidates) == 1:
+                logger.info(f"Left with one candidate, stopping.")
+                break
+        else:
+            logger.info(f"Pruned for all users, Found {len(candidates)}")
+
+        if not candidates:
+            raise RuntimeError("This should never happen")
+
+        sorted_candidates = list(candidates)
+        sorted_candidates.sort(
+            key=lambda s: self.get_combined_score(s), reverse=True
+        )
+        max_score = self.get_combined_score(sorted_candidates[0])
+        sorted_candidates = [
+            s
+            for s in sorted_candidates
+            if self.get_combined_score(s) == max_score
+        ]
+        picked: KaraokeSessionSong = sorted_candidates[0]
+        logger.info(f"Picked {picked.song.title}.")
+        logger.info(f"Combined score: {self.get_combined_score(picked)}")
+        picked.played = True
+
+        song_ratings: dict[User, Rating] = {
+            rating.user: rating.rating for rating in picked.song.ratings
+        }
+
+        for user in self.users:
+            user.score += self.get_rating_score(
+                song_ratings.get(user.user, Rating.DONT_KNOW)
+            )
+
+        session.commit()
+        return picked.song

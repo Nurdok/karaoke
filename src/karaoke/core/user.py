@@ -1,4 +1,4 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import String
 
 from karaoke.core.base import Base
@@ -9,6 +9,9 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
+    ratings: Mapped[list["UserSongRating"]] = relationship(
+        back_populates="user"
+    )
 
     def __repr__(self) -> str:
         return f"User(id={self.id}, name={self.name})"

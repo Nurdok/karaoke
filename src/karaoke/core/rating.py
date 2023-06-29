@@ -1,9 +1,10 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, Session
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from enum import Enum
 
 from karaoke.core.base import Base
 from karaoke.core.song import Song
+from karaoke.core.user import User
 
 
 class Rating(Enum):
@@ -19,9 +20,11 @@ class UserSongRating(Base):
     user_id: Mapped[int] = mapped_column(
         ForeignKey("user_account.id"), primary_key=True
     )
+    user: Mapped[User] = relationship(back_populates="ratings")
     song_id: Mapped[int] = mapped_column(
         ForeignKey("song.id"), primary_key=True
     )
+    song: Mapped[Song] = relationship(back_populates="ratings")
     rating: Mapped[Rating] = mapped_column()
 
     def __repr__(self) -> str:
