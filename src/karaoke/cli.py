@@ -22,6 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 LOCAL_DB = "sqlite:///karaoke.sqlite"
+ECHO = False
 
 
 def format_song(song: Song) -> str:
@@ -33,7 +34,7 @@ def format_song(song: Song) -> str:
 
 @click.command()
 def _init_db() -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     Base.metadata.create_all(engine)
     click.echo("Initialized database.")
 
@@ -41,7 +42,7 @@ def _init_db() -> None:
 @click.command()
 @click.option("--name", "-n", type=str, help="Name")
 def _create_user(name: Optional[str]) -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         if name is None:
             name = click.prompt("Name")
@@ -53,7 +54,7 @@ def _create_user(name: Optional[str]) -> None:
 
 @click.command()
 def _list_users() -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         all_users = session.query(User).all()
         click.echo(f"Found {len(all_users)} users:")
@@ -64,7 +65,7 @@ def _list_users() -> None:
 @click.command()
 @click.option("--user-id", "-u", type=int, help="User ID")
 def _rate_song(user_id: int) -> None:
-    engine = create_engine(LOCAL_DB, echo=False)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         user: Optional[User] = (
             session.query(User).filter_by(id=user_id).first()
@@ -113,7 +114,7 @@ def _rate_song(user_id: int) -> None:
 @click.option("--artist", "-a", type=str, help="Artist")
 @click.option("--video-link", "-l", type=str, help="Video Link")
 def _create_song(title, artist, video_link) -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         if title is None:
             title = click.prompt("Title")
@@ -129,7 +130,7 @@ def _create_song(title, artist, video_link) -> None:
 
 @click.command()
 def _list_songs() -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         all_songs = session.query(Song).all()
         click.echo(f"Found {len(all_songs)} songs:")
@@ -140,7 +141,7 @@ def _list_songs() -> None:
 @click.command()
 @click.option("--user-id", "-u", type=int, help="User ID", multiple=True)
 def _create_session(user_id: list[int]) -> None:
-    engine = create_engine(LOCAL_DB, echo=False)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         karaoke_session = KaraokeSession()
         karaoke_session.generate_display_id(session)
@@ -161,7 +162,7 @@ def _create_session(user_id: list[int]) -> None:
 @click.command()
 @click.option("--session-id", "-s", type=str, help="Session ID")
 def next_song(session_id: str) -> None:
-    engine = create_engine(LOCAL_DB, echo=True)
+    engine = create_engine(LOCAL_DB, echo=ECHO)
     with sessionmaker(bind=engine)() as session:
         karaoke_session = (
             session.query(KaraokeSession).filter(display_id=session_id).first()
