@@ -22,6 +22,7 @@ black = "*"
 mypy = "*"
 types-PyYAML = "*"
 types-redis = "*"
+virtualenvwrapper = "*"
 
 [build-system]
 requires = ["poetry-core"]

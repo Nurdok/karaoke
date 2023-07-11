@@ -8,10 +8,11 @@ from karaoke.core.user import User
 
 
 class Rating(Enum):
-    DONT_KNOW = 0
-    SING_ALONG = 1
-    CAN_TAKE_THE_MIC = 2
-    NEED_THE_MIC = 3
+    UNKNOWN = 0
+    DONT_KNOW = 1
+    SING_ALONG = 2
+    CAN_TAKE_THE_MIC = 3
+    NEED_THE_MIC = 4
 
 
 class UserSongRating(Base):

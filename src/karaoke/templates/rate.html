@@ -52,9 +52,16 @@
         <button class="rating-button" onclick="rateSong(3)">I can take the mic<br/>(3)</button>
         <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC<br/>(4)</button>
     </div>
+    <div id="previous-song-container">
+        <p><small>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</small></p>
+        <button onclick="undoRating()">Undo (<kbd>Ctrl</kbd>+<kbd>z</kbd>)</button>
+    </div>
 </div>
 
 <script>
+    const userId = '{{ user.id }}';
+    let songStack = [];
+
     document.addEventListener('keydown', function (event) {
         switch (event.key) {
             case '1':
@@ -69,32 +76,51 @@
             case '4':
                 rateSong(4);
                 break;
+            case 'z':
+                if (event.ctrlKey) {
+                    undoRating();
+                }
+                break;
         }
     });
 
-    function rateSong(rating) {
-        var userId = '{{ user.id }}';
-
-        var rating_string = '';
-        switch (rating) {
+    function toRatingEnumString(rating_int) {
+        switch (rating_int) {
+            case 0:
+                return 'UNKNOWN';
             case 1:
-                rating_string = 'DONT_KNOW';
-                break;
+                return 'DONT_KNOW';
             case 2:
-                rating_string = 'SING_ALONG';
-                break;
+                return 'SING_ALONG';
             case 3:
-                rating_string = 'CAN_TAKE_THE_MIC';
-                break;
+                return 'CAN_TAKE_THE_MIC';
             case 4:
-                rating_string = 'NEED_THE_MIC';
-                break;
+                return 'NEED_THE_MIC';
         }
+    }
 
-        var data = {
+    function toRatingDisplayString(rating_int) {
+        switch (rating_int) {
+            case 0:
+                return 'Unknown';
+            case 1:
+                return 'I don\'t know this song';
+            case 2:
+                return 'I can sing along';
+            case 3:
+                return 'I can take the mic';
+            case 4:
+                return 'I NEED THE MIC';
+        }
+    }
+
+    function rateSong(rating) {
+        let ratingString = toRatingEnumString(rating)
+        songStack.slice(-1)[0].rating = rating;
+        const data = {
             userId: userId,
-            songId: document.getElementById('song-id').textContent,
-            rating: rating_string
+            songId: songStack.slice(-1)[0].id,
+            rating: ratingString
         };
 
         fetch('/rate-song', {
@@ -106,7 +132,10 @@
         })
                 .then(response => {
                     if (response.ok) {
-                        getNextSong();
+                        if (ratingString !== "UNKNOWN") {
+                            getNextSong();
+                        }
+                        updateSongDetails();
                     } else {
                         console.error('Error rating song:', response.status);
                     }
@@ -116,17 +145,42 @@
                 });
     }
 
+    function updateSongDetails() {
+        console.log(songStack);
+        document.getElementById('song-title').textContent = songStack.slice(-1)[0].title;
+        document.getElementById('song-artist').textContent = songStack.slice(-1)[0].artist;
+
+        if (songStack.length <= 1) {
+            document.getElementById('previous-song-container').setAttribute("style", "visibility: hidden")
+            return;
+        }
+
+        document.getElementById('previous-song-container').setAttribute("style", "visibility: visible")
+        document.getElementById('previous-song-title').textContent = songStack.slice(-2)[0].title;
+        document.getElementById('previous-song-artist').textContent = songStack.slice(-2)[0].artist;
+        document.getElementById('previous-song-rating').textContent = toRatingDisplayString(songStack.slice(-2)[0].rating);
+    }
+
     function getNextSong() {
         fetch('/next-unrated-song?u={{ user.id }}')
                 .then(response => response.json())
                 .then(song => {
-                    document.getElementById('song-title').textContent = song.song_title;
-                    document.getElementById('song-artist').textContent = song.song_artist;
-                    document.getElementById('song-id').textContent = song.song_id;
+                    songStack.push({
+                        id: song.song_id,
+                        title: song.song_title,
+                        artist: song.song_artist,
+                        rating: 0
+                    });
+                    updateSongDetails();
                 })
                 .catch(error => {
                     console.error('Error fetching next song:', error);
                 });
+    }
+
+    function undoRating() {
+        songStack.pop();
+        rateSong(0);
     }
 
     // Initial request to get the first song

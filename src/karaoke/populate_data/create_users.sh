@@ -1,7 +1,7 @@
-kr user create -m Amir
-kr user create -m Haim
-kr user create -m Daniel
-kr user create -m Twaik
-kr user create -m Yonatan
-kr user create -m Inbal
-kr user create -m Pini
+kr user create -n Amir
+kr user create -n Haim
+kr user create -n Daniel
+kr user create -n Twaik
+kr user create -n Yonatan
+kr user create -n Inbal
+kr user create -n Pini

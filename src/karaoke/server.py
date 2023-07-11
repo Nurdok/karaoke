@@ -80,20 +80,25 @@ def rate_song() -> Response:
     print(data)
     user_id: int = int(data.get("userId", -1))
     song_id: int = int(data.get("songId", -1))
-    rating: str = data.get("rating", "")
-    if user_id == -1 or song_id == -1 or rating == "":
+    rating_str: str = data.get("rating", "")
+    if user_id == -1 or song_id == -1 or rating_str == "":
         return Response(status=400)
 
+    rating: Rating = Rating[rating_str]
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
-        user_rating: UserSongRating = UserSongRating(
-            user_id=user_id,
-            song_id=song_id,
-            rating=Rating[rating],
-        )
-        session.add(user_rating)
+        if rating == Rating.UNKNOWN:
+            session.query(UserSongRating).filter_by(
+                user_id=user_id, song_id=song_id
+            ).delete()
+        else:
+            user_rating: UserSongRating = UserSongRating(
+                user_id=user_id,
+                song_id=song_id,
+                rating=rating,
+            )
+            session.add(user_rating)
         session.commit()
-
     return Response(status=200)
 
 
