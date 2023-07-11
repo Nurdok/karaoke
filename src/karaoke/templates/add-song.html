@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Submit a Song</title>
+</head>
+<body>
+  <datalist id="artist-list">
+      {% for artist in artists %}
+        <option value="{{ artist }}">
+      {% endfor %}
+  </datalist>
+
+  <div>
+  <form action="/add-song" method="post">
+    <input type="text" id="artist" name="artist" placeholder="Artist" list="artist-list" />
+    <input type="text" id="title" name="title" placeholder="Title" />
+    <input type="text" id="video_link" name="video_link" placeholder="Video Link" />
+    <input type="checkbox" name="i_ll_sing_it" value="1"> I'll sing this song even if no one else knows it
+    <input type="checkbox" name="pin_artist" value="1"> Pin artist
+    <input type="submit" value="Submit" />
+  </form>
+  </div>
+  <script>
+  </script>
+</body>
+</html>

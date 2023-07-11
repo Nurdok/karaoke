@@ -77,7 +77,6 @@ def next_unrated_song() -> Response:
 @app.route("/rate-song", methods=["POST"])
 def rate_song() -> Response:
     data: dict[str, str] = json.loads(request.data.decode("utf-8"))
-    print(data)
     user_id: int = int(data.get("userId", -1))
     song_id: int = int(data.get("songId", -1))
     rating_str: str = data.get("rating", "")
@@ -117,6 +116,27 @@ def rate() -> Response | str:
     if user is None:
         return Response(status=404)
     return render_template("rate.html", user=user)
+
+
+@app.route("/add-song")
+def add_song() -> Response | str:
+    user_id: int = int(request.args.get("u", -1))
+    if user_id == -1:
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        user: Optional[User] = (
+            session.query(User).filter_by(id=user_id).first()
+        )
+
+    artists = [
+        result[0] for result in session.query(Song.artist).distinct().all()
+    ]
+
+    if user is None:
+        return Response(status=404)
+    return render_template("add-song.html", user=user, artists=artists)
 
 
 if __name__ == "__main__":
