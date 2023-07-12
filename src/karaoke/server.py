@@ -25,7 +25,7 @@ def index() -> str:
     return render_template("player.html", session_id=session_id)
 
 
-@app.route("/next_video")
+@app.route("/api/next_video")
 def next_video() -> str:
     session_id: str = request.args.get("s", "")
     logger.info(f"Getting next video for session {session_id}")
@@ -50,7 +50,7 @@ def next_video() -> str:
         return song.video_link
 
 
-@app.route("/next-unrated-song")
+@app.route("/api/next-unrated-song")
 def next_unrated_song() -> Response:
     user_id: int = int(request.args.get("u", -1))
     if user_id == -1:
@@ -74,7 +74,7 @@ def next_unrated_song() -> Response:
     )
 
 
-@app.route("/rate-song", methods=["POST"])
+@app.route("/api/rate-song", methods=["POST"])
 def rate_song() -> Response:
     data: dict[str, str] = json.loads(request.data.decode("utf-8"))
     user_id: int = int(data.get("userId", -1))
@@ -137,6 +137,31 @@ def add_song() -> Response | str:
     if user is None:
         return Response(status=404)
     return render_template("add-song.html", user=user, artists=artists)
+
+
+@app.route("/api/add-song", methods=["POST"])
+def add_song_api() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    artist: Optional[str] = data.get("artist", None)
+    title: Optional[str] = data.get("title", None)
+    video_link: Optional[str] = data.get("video_link", None)
+
+    print(f"Adding song: {artist} - {title} - {video_link}")
+
+    if None in (artist, title, video_link):
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        song: Song = Song(
+            artist=artist,
+            title=title,
+            video_link=video_link,
+        )
+        session.add(song)
+        session.commit()
+
+    return Response(status=200)
 
 
 if __name__ == "__main__":

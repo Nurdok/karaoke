@@ -1,26 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Submit a Song</title>
+    <title>Submit a Song</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        form {
+            width: max-content;
+        }
+        form p {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #pin-artist {
+            appearance: none;
+        }
+
+        .pin {
+            height: 1em;
+            width: 1em;
+            display: inline-block;
+        }
+
+        #pin-artist + .pin {
+            background: url("/static/unlock.svg") no-repeat center;
+            transition: all 100ms;
+        }
+
+        #pin-artist:checked + .pin {
+            background: url("/static/lock-fill.svg") no-repeat center;
+            transition: all 100ms;
+        }
+    </style>
 </head>
 <body>
-  <datalist id="artist-list">
-      {% for artist in artists %}
-        <option value="{{ artist }}">
-      {% endfor %}
-  </datalist>
+<datalist id="artist-list">
+    {% for artist in artists %}
+    <option value="{{ artist }}">
+        {% endfor %}
+</datalist>
 
-  <div>
-  <form action="/add-song" method="post">
-    <input type="text" id="artist" name="artist" placeholder="Artist" list="artist-list" />
-    <input type="text" id="title" name="title" placeholder="Title" />
-    <input type="text" id="video_link" name="video_link" placeholder="Video Link" />
-    <input type="checkbox" name="i_ll_sing_it" value="1"> I'll sing this song even if no one else knows it
-    <input type="checkbox" name="pin_artist" value="1"> Pin artist
-    <input type="submit" value="Submit" />
-  </form>
-  </div>
-  <script>
-  </script>
+<div>
+    <form>
+        <p>
+            <label for="artist">Artist:</label>
+            <span>
+                <input type="checkbox" id="pin-artist" />
+                <label for="pin-artist" class="pin"></label>
+                <input type="text" id="artist" name="artist" placeholder="Artist" list="artist-list"/>
+            </span>
+        </p>
+        <p>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" placeholder="Title" />
+        </p>
+        <p>
+            <label for="video_link">Video Link:</label>
+            <input type="text" id="video_link" name="video_link" placeholder="Video Link" />
+        </p>
+        <input type="checkbox" id="i_ll_sing_it" name="i_ll_sing_it" value="1"> I'll sing this song even if no one else knows it
+        <input type="button" value="Submit" onclick="submitForm()" />
+    </form>
+</div>
+<script>
+    function submitForm() {
+        let artist = document.getElementById("artist").value;
+        let title = document.getElementById("title").value;
+        let video_link = document.getElementById("video_link").value;
+        //let i_ll_sing_it = document.getElementById("i_ll_sing_it").checked;
+        let data = {
+            artist: artist,
+            title: title,
+            video_link: video_link,
+            //i_ll_sing_it: i_ll_sing_it,
+            //pin_artist: pin_artist
+        };
+
+        fetch('/api/add-song', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+                .then(() => {
+                    if (!document.getElementById("pin-artist").checked) {
+                        document.getElementById("artist").value = "";
+                    }
+                    document.getElementById("title").value = "";
+                    document.getElementById("video_link").value = "";
+                });
+
+    }
+</script>
 </body>
 </html>

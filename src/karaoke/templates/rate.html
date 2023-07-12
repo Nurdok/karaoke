@@ -123,7 +123,7 @@
             rating: ratingString
         };
 
-        fetch('/rate-song', {
+        fetch('/api/rate-song', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -162,7 +162,7 @@
     }
 
     function getNextSong() {
-        fetch('/next-unrated-song?u={{ user.id }}')
+        fetch('/api/next-unrated-song?u={{ user.id }}')
                 .then(response => response.json())
                 .then(song => {
                     songStack.push({
