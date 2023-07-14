@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from karaoke.core.session import KaraokeSession
 from karaoke.core.user import User
 from karaoke.core.song import Song
-from karaoke.core.utils import get_any_unrated_song
+from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
 from karaoke.core.rating import UserSongRating, Rating
 from typing import Optional
 import logging
@@ -20,6 +20,29 @@ app = Flask(__name__)
 
 
 @app.route("/")
+def main() -> str:
+    return render_template("index.html")
+
+
+@app.route("/users")
+def users() -> str:
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        users = session.query(User).all()
+    return render_template("users.html", users=users)
+
+
+@app.route("/api/create_session", methods=["POST"])
+def create_session() -> Response:
+    data = json.loads(request.data)
+    user_ids = data["user_ids"]
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = create_karaoke_session(user_ids, session)
+    return jsonify({"session_id": karaoke_session.id})
+
+
+@app.route("/player")
 def index() -> str:
     session_id: str = request.args.get("s", "")
     return render_template("player.html", session_id=session_id)
@@ -120,23 +143,13 @@ def rate() -> Response | str:
 
 @app.route("/add-song")
 def add_song() -> Response | str:
-    user_id: int = int(request.args.get("u", -1))
-    if user_id == -1:
-        return Response(status=400)
-
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
-        user: Optional[User] = (
-            session.query(User).filter_by(id=user_id).first()
-        )
+        artists = [
+            result[0] for result in session.query(Song.artist).distinct().all()
+        ]
 
-    artists = [
-        result[0] for result in session.query(Song.artist).distinct().all()
-    ]
-
-    if user is None:
-        return Response(status=404)
-    return render_template("add-song.html", user=user, artists=artists)
+    return render_template("add-song.html", artists=artists)
 
 
 @app.route("/api/add-song", methods=["POST"])

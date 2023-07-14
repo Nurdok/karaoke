@@ -16,6 +16,9 @@
             justify-content: space-between;
             align-items: center;
         }
+        p label {
+            padding-right: 3em;
+        }
         #pin-artist {
             appearance: none;
         }
@@ -24,6 +27,7 @@
             height: 1em;
             width: 1em;
             display: inline-block;
+            padding-right: 0;
         }
 
         #pin-artist + .pin {
@@ -35,6 +39,7 @@
             background: url("/static/lock-fill.svg") no-repeat center;
             transition: all 100ms;
         }
+
     </style>
 </head>
 <body>
@@ -62,7 +67,6 @@
             <label for="video_link">Video Link:</label>
             <input type="text" id="video_link" name="video_link" placeholder="Video Link" />
         </p>
-        <input type="checkbox" id="i_ll_sing_it" name="i_ll_sing_it" value="1"> I'll sing this song even if no one else knows it
         <input type="button" value="Submit" onclick="submitForm()" />
     </form>
 </div>
@@ -71,13 +75,10 @@
         let artist = document.getElementById("artist").value;
         let title = document.getElementById("title").value;
         let video_link = document.getElementById("video_link").value;
-        //let i_ll_sing_it = document.getElementById("i_ll_sing_it").checked;
         let data = {
             artist: artist,
             title: title,
             video_link: video_link,
-            //i_ll_sing_it: i_ll_sing_it,
-            //pin_artist: pin_artist
         };
 
         fetch('/api/add-song', {

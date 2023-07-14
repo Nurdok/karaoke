@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Users | Fair Karaoke</title>
+    <style>
+        html {
+            height: 100%;
+        }
+
+        body {
+            margin: 3em;
+            height: 100%;
+        }
+
+        #userlist {
+            display: flex;
+            flex-flow: column nowrap;
+        }
+
+        .user-row {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-flow: row nowrap;
+            justify-content: space-between;
+            row-gap: 3em;
+            width: 10em;
+        }
+
+        .login-btn {
+            flex: none;
+        }
+    </style>
+</head>
+<body>
+<h1>Users</h1>
+<h3>I dare you to find a less secure log-in page!</h3>
+
+<div id="userlist">
+    {% for user in users %}
+        <div class="user-row">
+            <p>{{ user.name }}</p>
+            <button onclick="login({{user.id}}, '{{user.name}}')" class="login-btn">Log in</button>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+    // Function to set a cookie with a specified name, value, and expiration date
+    function setCookie(cookieName, cookieValue, expirationDays) {
+      var date = new Date();
+      date.setTime(date.getTime() + (expirationDays * 24 * 60 * 60 * 1000));
+      var expires = "expires=" + date.toUTCString();
+      document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+    }
+
+    function login(id, name) {
+        setCookie("userId", id, 300);
+        setCookie("username", name, 300);
+
+        window.location.href = '/';
+    }
+</script>
+</body>
+</html>
