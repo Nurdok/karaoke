@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Users | Fair Karaoke</title>
-    <link type="text/css" rel="stylesheet" href='{{ url_for("static", filename="main.css") }}' />
-    <script src='{{ url_for("static", filename="main.js") }}'></script>
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}Fair Karaoke{% endblock %}
+
+{% block content %}
 <h1>Fair Karaoke</h1>
 <h2><span id="username"></span>, what would you like to do?</h2>
 <ul>
@@ -26,4 +22,4 @@
     document.getElementById("username").innerText = username;
     document.getElementById("rate-link").href = "/rate?u=" + userId;
 </script>
-</body>
+{% endblock %}
