@@ -1,46 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Song Rating</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
+{% extends "base.html" %}
 
-        .song-container {
-            margin: 50px auto;
-            width: 400px;
-        }
+{% block subtitle %}Rate Songs{% endblock %}
 
-        h1 {
-            margin-bottom: 0;
-        }
+{% block head %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
 
-        h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-        }
+    .song-container {
+        margin: 50px auto;
+        width: 400px;
+    }
 
-        p {
-            font-size: 18px;
-            margin-bottom: 20px;
-        }
+    h1 {
+        margin-bottom: 0;
+    }
 
-        .rating-buttons {
-            display: flex;
-            justify-content: space-between;
-            column-gap: 5px;
-        }
+    h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
 
-        .rating-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
+    p {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .rating-buttons {
+        display: flex;
+        justify-content: space-between;
+        column-gap: 5px;
+    }
+
+    .rating-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <div class="song-container">
     <p>{{ user.name }}, How well do you know this song?</p>
     <h1 id="song-title">Loading...</h1>
@@ -186,5 +188,5 @@
     // Initial request to get the first song
     getNextSong();
 </script>
-</body>
-</html>
+{% endblock %}
+```

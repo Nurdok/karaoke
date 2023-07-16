@@ -12,14 +12,8 @@
 </ul>
 
 <script>
-    // Example usage: get the value of the "userId" cookie
-    let userId = getCookie("userId");
-    if (userId === null) {
-      // If the user is not logged in, redirect to the login page
-      window.location.href = "/users";
-    }
-    let username = getCookie("username");
-    document.getElementById("username").innerText = username;
-    document.getElementById("rate-link").href = "/rate?u=" + userId;
+    let user = getUserOrRedirectToLoginPage();
+    document.getElementById("username").innerText = user.name;
+    document.getElementById("rate-link").href = "/rate?u=" + user.id;
 </script>
 {% endblock %}
