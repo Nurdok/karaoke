@@ -5,7 +5,6 @@
 {% block head %}
 <style>
     body {
-        font-family: Arial, sans-serif;
         text-align: center;
     }
 
@@ -44,7 +43,7 @@
 
 {% block content %}
 <div class="song-container">
-    <p>{{ user.name }}, How well do you know this song?</p>
+    <p><span id="user-name"></span>, How well do you know this song?</p>
     <h1 id="song-title">Loading...</h1>
     <h3 id="song-artist"></h3>
     <p id="song-id" style="visibility: hidden"></p>
@@ -61,7 +60,8 @@
 </div>
 
 <script>
-    const userId = '{{ user.id }}';
+    const user = getUserOrRedirectToLoginPage();
+    document.getElementById('user-name').textContent = user.name;
     let songStack = [];
 
     document.addEventListener('keydown', function (event) {
@@ -120,7 +120,7 @@
         let ratingString = toRatingEnumString(rating)
         songStack.slice(-1)[0].rating = rating;
         const data = {
-            userId: userId,
+            userId: user.id,
             songId: songStack.slice(-1)[0].id,
             rating: ratingString
         };
@@ -164,7 +164,7 @@
     }
 
     function getNextSong() {
-        fetch('/api/next-unrated-song?u={{ user.id }}')
+        fetch(`/api/next-unrated-song?u=${user.id}`)
                 .then(response => response.json())
                 .then(song => {
                     songStack.push({
@@ -181,6 +181,9 @@
     }
 
     function undoRating() {
+        if (songStack.length <= 1) {
+            return;
+        }
         songStack.pop();
         rateSong(0);
     }
@@ -189,4 +192,3 @@
     getNextSong();
 </script>
 {% endblock %}
-```

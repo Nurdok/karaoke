@@ -126,19 +126,7 @@ def rate_song() -> Response:
 
 @app.route("/rate")
 def rate() -> Response | str:
-    user_id: int = int(request.args.get("u", -1))
-    if user_id == -1:
-        return Response(status=400)
-
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        user: Optional[User] = (
-            session.query(User).filter_by(id=user_id).first()
-        )
-
-    if user is None:
-        return Response(status=404)
-    return render_template("rate.html", user=user)
+    return render_template("rate.html")
 
 
 @app.route("/add-song")
