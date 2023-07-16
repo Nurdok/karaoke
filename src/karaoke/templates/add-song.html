@@ -1,48 +1,51 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Submit a Song</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        form {
-            width: max-content;
-        }
-        form p {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-        }
-        p label {
-            padding-right: 3em;
-        }
-        #pin-artist {
-            appearance: none;
-        }
+{% extends "base.html" %}
 
-        .pin {
-            height: 1em;
-            width: 1em;
-            display: inline-block;
-            padding-right: 0;
-        }
+{% block subtitle %}Add a Song{% endblock %}
 
-        #pin-artist + .pin {
-            background: url("/static/unlock.svg") no-repeat center;
-            transition: all 100ms;
-        }
+{% block head %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        align-content: center;
+    }
+    form {
+        width: max-content;
+    }
+    form p {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    p label {
+        padding-right: 3em;
+    }
+    #pin-artist {
+        appearance: none;
+    }
 
-        #pin-artist:checked + .pin {
-            background: url("/static/lock-fill.svg") no-repeat center;
-            transition: all 100ms;
-        }
+    .pin {
+        height: 1em;
+        width: 1em;
+        display: inline-block;
+        padding-right: 0;
+    }
 
-    </style>
-</head>
-<body>
+    #pin-artist + .pin {
+        background: url("/static/unlock.svg") no-repeat center;
+        transition: all 100ms;
+    }
+
+    #pin-artist:checked + .pin {
+        background: url("/static/lock-fill.svg") no-repeat center;
+        transition: all 100ms;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
 <datalist id="artist-list">
     {% for artist in artists %}
     <option value="{{ artist }}">
@@ -98,5 +101,4 @@
 
     }
 </script>
-</body>
-</html>
+{% endblock %}
