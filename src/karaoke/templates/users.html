@@ -1,38 +1,31 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Users | Fair Karaoke</title>
-    <style>
-        html {
-            height: 100%;
-        }
+{% extends "base.html" %}
 
-        body {
-            margin: 3em;
-            height: 100%;
-        }
+{% block subtitle %}Users{% endblock %}
 
-        #userlist {
-            display: flex;
-            flex-flow: column nowrap;
-        }
+{% block head %}
+<style>
+    #userlist {
+        display: flex;
+        flex-flow: column nowrap;
+    }
 
-        .user-row {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-flow: row nowrap;
-            justify-content: space-between;
-            row-gap: 3em;
-            width: 10em;
-        }
+    .user-row {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: space-between;
+        row-gap: 3em;
+        width: 10em;
+    }
 
-        .login-btn {
-            flex: none;
-        }
-    </style>
-</head>
-<body>
+    .login-btn {
+        flex: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
 <h1>Users</h1>
 <h3>I dare you to find a less secure log-in page!</h3>
 
@@ -61,5 +54,4 @@
         window.location.href = '/';
     }
 </script>
-</body>
-</html>
+{% endblock %}

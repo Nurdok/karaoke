@@ -3,10 +3,49 @@ html {
 }
 
 body {
-    margin: 3em;
-    height: 100%;
+    margin: 0;
+    padding: 0;
     font-family: Arial, sans-serif;
+    font-size: calc(25px + 0.490625vw);
+
 }
+
+/* Center the container horizontally */
+.container {
+    margin: 0 auto;
+}
+
+.content {
+    max-width: 90%;
+    padding: 10px;
+}
+
+ /* Set legible font size for different screen sizes */
+.content h1 {
+    /*font-size: 4rem; !* Example font size for headings *!*/
+}
+
+.content p {
+    /*font-size: 2.2rem; !* Example font size for paragraphs *!*/
+}
+
+/* Responsive font size for desktop devices */
+@media screen and (min-width: 800px) {
+    .content {
+        max-width: 800px; /* Adjust this value to your preferred max width */
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .content h1 {
+        /*font-size: 2rem;*/
+    }
+
+    .content p {
+        /*font-size: 1rem;*/
+    }
+}
+
 
 .logo {
     text-decoration: none;
@@ -14,4 +53,5 @@ body {
     border-radius: 15px;
     padding: 10px;
     color: black;
+    font-size: calc(20px + 1vw);
 }
