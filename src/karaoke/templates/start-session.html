@@ -13,7 +13,7 @@
                 <label for="user-{{ user.id }}">{{ user.name }}</label>
             </p>
             {% endfor %}
-            <button type="submit">Start session!</button>
+            <button type="submit" onclick="submitForm()">Start session!</button>
         </form>
     </div>
 </div>
@@ -44,7 +44,7 @@
             user_ids: user_ids,
         };
 
-        fetch('/api/start-session', {
+        fetch('/api/create-session', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -56,7 +56,7 @@
                     document.getElementById("session-id").innerText = response_data.session_id;
                     document.getElementById("session-details").style.display = "block";
                     document.getElementById("start-session-form").style.display = "none";
-                })
+                });
 
     }
 </script>
