@@ -39,6 +39,24 @@
         font-size: calc(26px + 1vw);
         cursor: pointer;
     }
+
+    @media (hover: none) {
+        .hotkey {
+            display: none;
+        }
+
+        .rating-buttons {
+            row-gap: 40px;
+        }
+
+        .rating-button {
+            padding: 40px;
+        }
+    }
+
+    #previous-song-container p {
+        font-size: 1.2rem;
+    }
 </style>
 {% endblock %}
 
@@ -49,14 +67,14 @@
     <h3 id="song-artist"></h3>
     <p id="song-id" style="visibility: hidden"></p>
     <div class="rating-buttons">
-        <button class="rating-button" onclick="rateSong(1)">I don't know this song<br/>(1)</button>
-        <button class="rating-button" onclick="rateSong(2)">I can sing along<br/>(2)</button>
-        <button class="rating-button" onclick="rateSong(3)">I can take the mic<br/>(3)</button>
-        <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC<br/>(4)</button>
+        <button class="rating-button" onclick="rateSong(1)">I don't know this song<span class="hotkey"><br/>(1)</span></button>
+        <button class="rating-button" onclick="rateSong(2)">I can sing along<span class="hotkey"><br/>(2)</span></button>
+        <button class="rating-button" onclick="rateSong(3)">I can take the mic<span class="hotkey"><br/>(3)</span></button>
+        <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC<span class="hotkey"><br/>(4)</span></button>
     </div>
     <div id="previous-song-container">
-        <p><small>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</small></p>
-        <button onclick="undoRating()">Undo (<kbd>Ctrl</kbd>+<kbd>z</kbd>)</button>
+        <p>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</p>
+        <button onclick="undoRating()">Undo<span class="hotkey">(<kbd>Ctrl</kbd>+<kbd>z</kbd>)</span></button>
     </div>
 </div>
 
@@ -154,11 +172,11 @@
         document.getElementById('song-artist').textContent = songStack.slice(-1)[0].artist;
 
         if (songStack.length <= 1) {
-            document.getElementById('previous-song-container').setAttribute("style", "visibility: hidden")
+            document.getElementById('previous-song-container').setAttribute("style", "display: none")
             return;
         }
 
-        document.getElementById('previous-song-container').setAttribute("style", "visibility: visible")
+        document.getElementById('previous-song-container').setAttribute("style", "display: block")
         document.getElementById('previous-song-title').textContent = songStack.slice(-2)[0].title;
         document.getElementById('previous-song-artist').textContent = songStack.slice(-2)[0].artist;
         document.getElementById('previous-song-rating').textContent = toRatingDisplayString(songStack.slice(-2)[0].rating);

@@ -165,5 +165,13 @@ def add_song_api() -> Response:
     return Response(status=200)
 
 
+@app.route("/start-session")
+def start_session() -> Response | str:
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        users = session.query(User).all()
+    return render_template("start-session.html", users=users)
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

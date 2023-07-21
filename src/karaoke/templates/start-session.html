@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block subtitle %}Start Session{% endblock %}
+
+{% block content %}
+<div id="start-session-form">
+    <h2>Who's singing tonight?</h2>
+    <div>
+        <form>
+            {% for user in users %}
+            <p>
+                <input type="checkbox" id="user-{{ user.id }}" name="user-{{ user.id }}" value="{{ user.id }}" class="user-checkbox"/>
+                <label for="user-{{ user.id }}">{{ user.name }}</label>
+            </p>
+            {% endfor %}
+            <button type="submit">Start session!</button>
+        </form>
+    </div>
+</div>
+
+<div id="session-details">
+    <h2>Your session ID is:</h2>
+    <h1 id="session-id"></h1>
+
+    <form id="goto-session" action=""><button type="submit">Copy session ID</button></form>
+</div>
+
+<script>
+    let user = getUserOrRedirectToLoginPage();
+    document.getElementById("user-" + user.id).checked = true;
+    document.getElementById("session-details").style.display = "none";
+    document.getElementById("start-session-form").style.display = "block";
+
+
+    function submitForm() {
+        let user_ids = [];
+        document.getElementsByClassName("user-checkbox").forEach(function (checkbox) {
+            if (checkbox.checked()) {
+                user_ids.push(checkbox.value);
+            }
+        });
+
+        let data = {
+            user_ids: user_ids,
+        };
+
+        fetch('/api/start-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+                .then(response => response.json())
+                .then(response_data => {
+                    document.getElementById("session-id").innerText = response_data.session_id;
+                    document.getElementById("session-details").style.display = "block";
+                    document.getElementById("start-session-form").style.display = "none";
+                })
+
+    }
+</script>
+{% endblock %}
