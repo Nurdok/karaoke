@@ -32,14 +32,14 @@ def users() -> str:
     return render_template("users.html", users=users)
 
 
-@app.route("/api/create_session", methods=["POST"])
+@app.route("/api/create-session", methods=["POST"])
 def create_session() -> Response:
     data = json.loads(request.data)
     user_ids = data["user_ids"]
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
         karaoke_session = create_karaoke_session(user_ids, session)
-    return jsonify({"session_id": karaoke_session.id})
+        return jsonify({"session_id": karaoke_session.display_id})
 
 
 @app.route("/player")
