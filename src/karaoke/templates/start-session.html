@@ -22,7 +22,10 @@
     <p>Your session ID is:</p>
     <h1 id="session-id"></h1>
 
-    <form id="goto-session" action=""><button type="submit">Go to player!</button></form>
+    <form id="goto-session" action="/player">
+        <input type="hidden" id="hidden-session-id" name="s" value="" />
+        <button type="submit">Go to player!</button>
+    </form>
 </div>
 
 <script>
@@ -57,7 +60,7 @@
                     document.getElementById("session-id").innerText = response_data.session_id;
                     document.getElementById("session-details").style.display = "block";
                     document.getElementById("start-session-form").style.display = "none";
-                    document.getElementById("goto-session").action = "/player?s=" + response_data.session_id;
+                    document.getElementById("hidden-session-id").value = response_data.session_id;
                 });
 
     }
