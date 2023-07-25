@@ -173,5 +173,9 @@ def start_session() -> Response | str:
     return render_template("start-session.html", users=users)
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+def start_prod_server() -> None:
+    app.run(host="0.0.0.0", port=80, debug=True)
+
+
+def start_dev_server() -> None:
+    app.run(host="0.0.0.0", port=5000, debug=True)
