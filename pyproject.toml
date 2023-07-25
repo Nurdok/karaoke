@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.scripts]
 kr = "karaoke.cli:main"
-kr_server = "karaoke.server:start_prod_server"
+kr_server = "karaoke.server:start_server"
 
 [tool.poetry.dependencies]
 python = "^3.11"
