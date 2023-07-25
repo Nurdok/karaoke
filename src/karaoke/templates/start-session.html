@@ -13,7 +13,8 @@
                 <label for="user-{{ user.id }}">{{ user.name }}</label>
             </p>
             {% endfor %}
-            <input type="button" value="Start session!" onclick="submitForm()" />
+            <input type="button" value="Start session!" onclick="startSession()" />
+            <input type="button" value="Generate playlist" onclick="generatePlaylist()"/>
         </form>
     </div>
 </div>
@@ -35,9 +36,9 @@
     document.getElementById("start-session-form").style.display = "block";
 
 
-    function submitForm() {
+    function startSession() {
         let user_ids = [];
-        checkboxes = document.getElementsByClassName("user-checkbox");
+        let checkboxes = document.getElementsByClassName("user-checkbox");
         for (let i = 0; i < checkboxes.length; i++) {
             if (checkboxes[i].checked) {
                 user_ids.push(checkboxes[i].value);
@@ -63,6 +64,31 @@
                     document.getElementById("hidden-session-id").value = response_data.session_id;
                 });
 
+    }
+
+    function generatePlaylist() {
+        let user_ids = [];
+        let checkboxes = document.getElementsByClassName("user-checkbox");
+        for (let i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                user_ids.push(checkboxes[i].value);
+            }
+        }
+
+        let form = document.createElement('form');
+        form.action='/generate-static-playlist';
+        form.method='POST';
+        form.target='_blank';
+
+
+        let i=document.createElement('input');
+        i.type='hidden';
+        i.name='user_ids';
+        i.value=JSON.stringify(user_ids);
+        form.appendChild(i);
+
+        document.body.appendChild(form);
+        form.submit();
     }
 </script>
 {% endblock %}

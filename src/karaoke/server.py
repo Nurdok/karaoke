@@ -9,7 +9,7 @@ from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
 from karaoke.core.rating import UserSongRating, Rating
-from typing import Optional
+from typing import Optional, Any
 import logging
 
 LOCAL_DB = "sqlite:///karaoke.sqlite"
@@ -25,7 +25,7 @@ def main() -> str:
 
 
 @app.route("/users")
-def users() -> str:
+def list_users() -> str:
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
         users = session.query(User).all()
@@ -40,6 +40,49 @@ def create_session() -> Response:
     with sessionmaker(bind=engine)() as session:
         karaoke_session = create_karaoke_session(user_ids, session)
         return jsonify({"session_id": karaoke_session.display_id})
+
+
+@app.route("/generate-static-playlist", methods=["POST"])
+def generate_static_playlist() -> Response | str:
+    print(request.form)
+    user_ids = json.loads(request.form.get("user_ids", []))
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = create_karaoke_session(user_ids, session)
+        users: list[User] = [
+            session_user.user for session_user in karaoke_session.users
+        ]
+        user_ratings: dict[int, dict[int, Rating]] = {
+            user.id: {
+                song_rating.song.id: song_rating.rating
+                for song_rating in user.ratings
+            }
+            for user in users
+        }
+
+        def get_next_song() -> Optional[Song]:
+            return karaoke_session.get_next_song(session)
+
+        songs: list[Song] = [s for s in iter(get_next_song, None)]
+        songs_with_stats: list[dict[str, Any]] = []
+        for song in songs:
+            songs_with_stats.append(
+                {
+                    "id": song.id,
+                    "title": song.title,
+                    "artist": song.artist,
+                    "ratings": {
+                        user.name: user_ratings[user.id]
+                        .get(song.id, Rating.DONT_KNOW)
+                        .name
+                        for user in users
+                    },
+                }
+            )
+
+        return render_template(
+            "playlist.html", songs=songs_with_stats, users=users
+        )
 
 
 @app.route("/player")
@@ -175,3 +218,7 @@ def start_session() -> Response | str:
 
 def start_server() -> None:
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+
+if __name__ == "__main__":
+    start_server()

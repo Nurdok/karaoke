@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Playlist{% endblock %}
+
+{% block head %}
+<style>
+    .song-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.75em;
+    }
+
+    .rating-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        font-size: 0.4em;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<p>This is a simulated playlist for a karaoke session with
+    {% for user in users %}{% if loop.last %}and {% endif %}{{ user.name }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+<div class="playlist">
+    {% for song in songs %}
+    <div class="song-container">
+        <span class="song-details"><b>{{ song.title }}</b> by <b>{{ song.artist }}</b></span>
+        <div class="rating-container">
+            {% for user_name, user_rating in song.ratings.items() %}
+            <span class="song-rating">{{ user_name }}: {{ user_rating }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+</script>
+{% endblock %}
