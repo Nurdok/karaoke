@@ -30,3 +30,18 @@ function getUserOrRedirectToLoginPage () {
     let username = getCookie(USER_NAME_COOKIE_NAME);
     return {id: userId, name: username};
 }
+
+// Function to set a cookie with a specified name, value, and expiration date
+function setCookie(cookieName, cookieValue, expirationDays) {
+    var date = new Date();
+    date.setTime(date.getTime() + (expirationDays * 24 * 60 * 60 * 1000));
+    var expires = "expires=" + date.toUTCString();
+    document.cookie = cookieName + "=" + cookieValue + ";" + expires + ";path=/";
+}
+
+function login(id, name) {
+    setCookie(USER_ID_COOKIE_NAME, id, 300);
+    setCookie(USER_NAME_COOKIE_NAME, name, 300);
+
+    window.location.href = '/';
+}

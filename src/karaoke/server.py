@@ -1,7 +1,7 @@
 import datetime
 import json
 
-from flask import Flask, render_template, jsonify, request, Response
+from flask import Flask, render_template, jsonify, request, Response, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from karaoke.core.session import KaraokeSession
@@ -30,6 +30,16 @@ def list_users() -> str:
     with sessionmaker(bind=engine)() as session:
         users = session.query(User).all()
     return render_template("users.html", users=users)
+
+
+@app.route("/users", methods=["POST"])
+def create_user() -> Response:
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        user = User(name=request.form["name"])
+        session.add(user)
+        session.commit()
+        return redirect("/users")
 
 
 @app.route("/api/create-session", methods=["POST"])
