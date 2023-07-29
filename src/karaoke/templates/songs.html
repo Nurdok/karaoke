@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Playlist{% endblock %}
+
+{% block head %}
+<style>
+    .song-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.75em;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<p><span id="user-name">{{ user.name }}</span>, these are your song ratings:</p>
+<div class="song-list">
+    {% for song in songs %}
+    <div class="song-container">
+        <span class="song-details"><b>{{ song.title }}</b> by <b>{{ song.artist }}</b></span>
+        <div class="rating-container">
+            <form class="song-rating-form" action="/rate" method="post">
+                <input type="hidden" name="song_id" value="{{ song.id }}">
+                <input type="hidden" name="user_id" value="{{ user_id }}">
+                <select name="rating">
+                    {{song.rating}}
+                  <option class="rating-option" value="1" {% if song.rating == 1 %}selected{% endif %}></option>
+                  <option class="rating-option" value="2" {% if song.rating == 2 %}selected{% endif %}></option>
+                  <option class="rating-option" value="3" {% if song.rating == 3 %}selected{% endif %}></option>
+                  <option class="rating-option" value="4" {% if song.rating == 4 %}selected{% endif %}></option>
+                </select>
+
+                <button class="change-rating" type="submit" class="btn btn-success btn-sm">+</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    let rating_option_values = document.getElementsByClassName('rating-option');
+    for (let i = 0; i < rating_option_values.length; i++) {
+        option = rating_option_values[i];
+        option.innerHTML = toRatingDisplayString(parseInt(option.value))
+    }
+
+    let change_rating_buttons = document.getElementsByClassName('change-rating');
+    for (let i =0; i < change_rating_buttons.length; i++) {
+        change_rating_buttons[i].hidden = true;
+    }
+</script>
+{% endblock %}

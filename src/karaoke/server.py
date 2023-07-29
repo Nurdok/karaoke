@@ -33,7 +33,7 @@ def list_users() -> str:
 
 
 @app.route("/users", methods=["POST"])
-def create_user() -> Response:
+def create_user() -> Response | str:
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
         user = User(name=request.form["name"])
@@ -43,7 +43,7 @@ def create_user() -> Response:
 
 
 @app.route("/api/create-session", methods=["POST"])
-def create_session() -> Response:
+def create_session() -> Response | str:
     data = json.loads(request.data)
     user_ids = data["user_ids"]
     engine = create_engine(LOCAL_DB)
@@ -93,6 +93,42 @@ def generate_static_playlist() -> Response | str:
         return render_template(
             "playlist.html", songs=songs_with_stats, users=users
         )
+
+
+@app.route("/songs")
+def list_songs() -> Response | str:
+    user_id: int = int(request.args.get("u", -1))
+    if user_id == -1:
+        return Response(status=400)
+
+    songs_with_ratings: list[dict[str, Any]] = []
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        user: Optional[User] = (
+            session.query(User).filter_by(id=user_id).first()
+        )
+        if user is None:
+            return Response(status=400)
+        songs: list[Song] = session.query(Song).all()
+        for song in songs:
+            user_rating: Optional[UserSongRating] = (
+                session.query(UserSongRating)
+                .filter_by(user_id=user_id, song_id=song.id)
+                .first()
+            )
+            songs_with_ratings.append(
+                {
+                    "id": song.id,
+                    "title": song.title,
+                    "artist": song.artist,
+                    "rating": (
+                        user_rating.rating.value
+                        if user_rating is not None
+                        else None
+                    ),
+                }
+            )
+    return render_template("songs.html", songs=songs_with_ratings, user=user)
 
 
 @app.route("/player")

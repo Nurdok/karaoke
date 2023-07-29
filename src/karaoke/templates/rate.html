@@ -105,36 +105,6 @@
         }
     });
 
-    function toRatingEnumString(rating_int) {
-        switch (rating_int) {
-            case 0:
-                return 'UNKNOWN';
-            case 1:
-                return 'DONT_KNOW';
-            case 2:
-                return 'SING_ALONG';
-            case 3:
-                return 'CAN_TAKE_THE_MIC';
-            case 4:
-                return 'NEED_THE_MIC';
-        }
-    }
-
-    function toRatingDisplayString(rating_int) {
-        switch (rating_int) {
-            case 0:
-                return 'Unknown';
-            case 1:
-                return 'I don\'t know this song';
-            case 2:
-                return 'I can sing along';
-            case 3:
-                return 'I can take the mic';
-            case 4:
-                return 'I NEED THE MIC';
-        }
-    }
-
     function rateSong(rating) {
         let ratingString = toRatingEnumString(rating)
         songStack.slice(-1)[0].rating = rating;
