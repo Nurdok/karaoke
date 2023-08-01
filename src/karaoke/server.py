@@ -175,7 +175,7 @@ def next_unrated_song() -> Response:
         )
 
     if song is None:
-        return Response(status=404)
+        return jsonify({"song_id": -1})
 
     return jsonify(
         {

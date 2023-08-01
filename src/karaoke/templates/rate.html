@@ -62,17 +62,17 @@
 
 {% block content %}
 <div class="song-container">
-    <p><span id="user-name"></span>, How well do you know this song?</p>
+    <p id="action-line"><span id="user-name"></span>, <span id="user-action"></span></p>
     <h1 id="song-title">Loading...</h1>
     <h3 id="song-artist"></h3>
     <p id="song-id" style="visibility: hidden"></p>
-    <div class="rating-buttons">
+    <div class="rating-buttons" style="display: none">
         <button class="rating-button" onclick="rateSong(1)">I don't know this song<span class="hotkey"><br/>(1)</span></button>
         <button class="rating-button" onclick="rateSong(2)">I can sing along<span class="hotkey"><br/>(2)</span></button>
         <button class="rating-button" onclick="rateSong(3)">I can take the mic<span class="hotkey"><br/>(3)</span></button>
         <button class="rating-button" onclick="rateSong(4)">I NEED THE MIC<span class="hotkey"><br/>(4)</span></button>
     </div>
-    <div id="previous-song-container">
+    <div id="previous-song-container" style="display: none">
         <p>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</p>
         <button onclick="undoRating()">Undo<span class="hotkey">(<kbd>Ctrl</kbd>+<kbd>z</kbd>)</span></button>
     </div>
@@ -136,20 +136,82 @@
                 });
     }
 
+    function updateSongTitle(title) {
+        document.getElementById('song-title').textContent = title;
+    }
+
+    function updateSongArtist(artist) {
+        document.getElementById('song-artist').textContent = artist;
+    }
+
+    function updatePreviousSongTitle(title) {
+        document.getElementById('previous-song-title').textContent = title;
+    }
+
+    function updatePreviousSongArtist(artist) {
+        document.getElementById('previous-song-artist').textContent = artist;
+    }
+
+    function updatePreviousSongRating(rating_str) {
+        document.getElementById('previous-song-rating').textContent = rating_str;
+    }
+
+    function setPreviousSongVisibility(visible) {
+        document.getElementById('previous-song-container').setAttribute("style", "display: " + (visible ? "block" : "none"));
+    }
+
+    function isValidSongId(id) {
+        return id >= 0;
+    }
+
+    function setActionTextToRate() {
+        document.getElementById('user-action').textContent = "how well do you know this song?";
+    }
+
+    function setActionTextToRatedAll() {
+        document.getElementById('user-action').textContent = "you've rated all the songs!";
+    }
+
+    function hideRatingButtons() {
+        document.getElementsByClassName('rating-buttons')[0].setAttribute("style", "display: none");
+    }
+
+    function showRatingButtons() {
+        document.getElementsByClassName('rating-buttons')[0].setAttribute("style", "display: flex");
+    }
+
+    function setActionLineDisplay(display) {
+        document.getElementById('action-line').setAttribute("style", "display: " + (display ? "block" : "none"));
+    }
+
     function updateSongDetails() {
         console.log(songStack);
-        document.getElementById('song-title').textContent = songStack.slice(-1)[0].title;
-        document.getElementById('song-artist').textContent = songStack.slice(-1)[0].artist;
+        let currentSong = songStack.slice(-1)[0];
+
+        if (isValidSongId(currentSong.id)) {
+            updateSongTitle(currentSong.title);
+            updateSongArtist(currentSong.artist);
+            setActionTextToRate();
+            setActionLineDisplay(true);
+            showRatingButtons();
+        } else {
+            updateSongTitle("");
+            updateSongArtist("");
+            setActionTextToRatedAll();
+            setActionLineDisplay(true);
+            hideRatingButtons();
+        }
 
         if (songStack.length <= 1) {
-            document.getElementById('previous-song-container').setAttribute("style", "display: none")
+            setPreviousSongVisibility(false);
             return;
         }
 
-        document.getElementById('previous-song-container').setAttribute("style", "display: block")
-        document.getElementById('previous-song-title').textContent = songStack.slice(-2)[0].title;
-        document.getElementById('previous-song-artist').textContent = songStack.slice(-2)[0].artist;
-        document.getElementById('previous-song-rating').textContent = toRatingDisplayString(songStack.slice(-2)[0].rating);
+        let previousSong = songStack.slice(-2)[0];
+        setPreviousSongVisibility(true);
+        updatePreviousSongTitle(previousSong.title);
+        updatePreviousSongArtist(previousSong.artist);
+        updatePreviousSongRating(toRatingDisplayString(previousSong.rating));
     }
 
     function getNextSong() {
@@ -177,6 +239,8 @@
         rateSong(0);
     }
 
+    setActionLineDisplay(false);
+    hideRatingButtons();
     // Initial request to get the first song
     getNextSong();
 </script>
