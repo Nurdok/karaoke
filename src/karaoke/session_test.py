@@ -1,3 +1,5 @@
+import logging
+
 from karaoke.core.song import Song
 from karaoke.core.user import User
 from karaoke.core.base import Base
@@ -16,7 +18,7 @@ from pytest import fixture
 
 @fixture
 def session() -> Session:
-    engine = create_engine("sqlite:///:memory:", echo=True)
+    engine = create_engine("sqlite:///:memory:", echo=False)
     Base.metadata.create_all(engine)
     return sessionmaker(bind=engine)()
 
@@ -124,3 +126,50 @@ def test_get_next_song(session: Session) -> None:
         songs[5],
         songs[2],
     ]
+
+
+def rate_song(
+    user: User, song: Song, rating: Rating, *, session: Session
+) -> UserSongRating:
+    user_song_rating: UserSongRating = UserSongRating(
+        user_id=user.id,
+        song_id=song.id,
+        rating=rating,
+    )
+    session.add(user_song_rating)
+    session.commit()
+    return user_song_rating
+
+
+def test_session_song_queue(session: Session) -> None:
+    """Test that the session initial song queue is generated correctly."""
+
+    # set up the data
+    users: list[User] = [
+        user1 := User(name="user1"),
+        user2 := User(name="user2"),
+        user3 := User(name="user3"),
+    ]
+
+    session.add_all(users)
+    session.commit()
+
+    songs: list[Song] = [
+        song1 := Song(title="song1", artist="artist1", video_link="link1"),
+        song2 := Song(title="song2", artist="artist2", video_link="link2"),
+        song3 := Song(title="song3", artist="artist3", video_link="link3"),
+    ]
+
+    session.add_all(songs)
+    session.commit()
+
+    rate_song(user1, song1, Rating.NEED_THE_MIC, session=session)
+    rate_song(user1, song2, Rating.NEED_THE_MIC, session=session)
+    rate_song(user2, song1, Rating.NEED_THE_MIC, session=session)
+    rate_song(user3, song3, Rating.NEED_THE_MIC, session=session)
+
+    karaoke_session: KaraokeSession = create_karaoke_session(
+        [user1.id, user2.id], session=session
+    )
+
+    assert set(song.song_id for song in karaoke_session.songs) == {song1.id}

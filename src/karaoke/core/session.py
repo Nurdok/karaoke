@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, String, select
+from sqlalchemy import ForeignKey, String, select, func
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from enum import Enum
@@ -68,21 +68,24 @@ class KaraokeSession(Base):
     def generate_song_queue(self, session: Session) -> None:
         user_ids = [user.user_id for user in self.users]
 
-        songs = (
-            session.query(Song)
-            .where(
-                Song.id.in_(
-                    select(UserSongRating.song_id)
-                    .select_from(UserSongRating)
-                    .where(UserSongRating.user_id.in_(user_ids))
-                )
+        songs_ids_query = (
+            select(
+                UserSongRating.song_id,
+                func.count("*"),
             )
-            .all()
+            .select_from(UserSongRating)
+            .where(UserSongRating.user_id.in_(user_ids))
+            .where(UserSongRating.rating != Rating.DONT_KNOW)
+            .group_by(UserSongRating.song_id)
+            .having(func.count("*") > 1)
+            .subquery()
         )
 
-        for song in songs:
+        song_ids = (row[0] for row in session.query(songs_ids_query).all())
+
+        for song_id in song_ids:
             kss = KaraokeSessionSong(
-                karaoke_session_id=self.id, song_id=song.id, played=False
+                karaoke_session_id=self.id, song_id=song_id, played=False
             )
             self.songs.append(kss)
             session.add(kss)

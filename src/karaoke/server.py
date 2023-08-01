@@ -1,6 +1,7 @@
 import datetime
 import json
 
+import typing
 from flask import Flask, render_template, jsonify, request, Response, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -11,6 +12,9 @@ from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
 from karaoke.core.rating import UserSongRating, Rating
 from typing import Optional, Any
 import logging
+
+if typing.TYPE_CHECKING:  # pragma: no cover
+    from werkzeug.wrappers import Response as BaseResponse
 
 LOCAL_DB = "sqlite:///karaoke.sqlite"
 
@@ -33,7 +37,7 @@ def list_users() -> str:
 
 
 @app.route("/users", methods=["POST"])
-def create_user() -> Response | str:
+def create_user() -> "BaseResponse":
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
         user = User(name=request.form["name"])
@@ -55,7 +59,7 @@ def create_session() -> Response | str:
 @app.route("/generate-static-playlist", methods=["POST"])
 def generate_static_playlist() -> Response | str:
     print(request.form)
-    user_ids = json.loads(request.form.get("user_ids", []))
+    user_ids = json.loads(request.form.get("user_ids", "[]"))
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
         karaoke_session = create_karaoke_session(user_ids, session)
