@@ -179,7 +179,7 @@ def _next_song(session_id: str) -> None:
             click.echo("Session not found")
             return
 
-        song: Optional[Song] = karaoke_session.get_next_song(session)
+        song: Optional[Song] = karaoke_session.get_next_song(session=session)
         if song is None:
             click.echo("No more songs in the queue.")
             return

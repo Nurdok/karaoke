@@ -75,7 +75,7 @@ def generate_static_playlist() -> Response | str:
         }
 
         def get_next_song() -> Optional[Song]:
-            return karaoke_session.get_next_song(session)
+            return karaoke_session.get_next_song(session=session)
 
         songs: list[Song] = [s for s in iter(get_next_song, None)]
         songs_with_stats: list[dict[str, Any]] = []
@@ -156,7 +156,7 @@ def next_video() -> str:
         if karaoke_session is None:
             return ""
 
-        song: Optional[Song] = karaoke_session.get_next_song(session)
+        song: Optional[Song] = karaoke_session.get_next_song(session=session)
         if song is None:
             return "https://www.youtube.com/embed/T1XgFsitnQw"
 

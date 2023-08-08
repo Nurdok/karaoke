@@ -114,9 +114,10 @@ def test_get_next_song(session: Session) -> None:
     )
 
     playlist: list[Song] = []
-    while (song := karaoke_session.get_next_song(session)) is not None:
+    while (song := karaoke_session.get_next_song(session=session)) is not None:
         print(song)
         playlist.append(song)
+        karaoke_session.mark_current_song_as_played(session=session)
 
     assert playlist == [
         songs[1],

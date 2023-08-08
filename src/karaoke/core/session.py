@@ -21,6 +21,9 @@ from karaoke.core.user import User
 
 logger = logging.getLogger(__name__)
 
+# Number of songs to hold off when snoozing a song.
+SNOOZE_TTL = 5
+
 
 class KaraokeSessionUser(Base):
     __tablename__ = "karaoke_session_user"
@@ -49,6 +52,8 @@ class KaraokeSessionSong(Base):
     )
     song: Mapped[Song] = relationship()
     played: Mapped[bool] = mapped_column()
+    current_song: Mapped[bool] = mapped_column(default=False)
+    snooze_ttl: Mapped[int] = mapped_column(default=0)
 
 
 def generate_id() -> str:
@@ -169,9 +174,65 @@ class KaraokeSession(Base):
             )
         return score
 
-    def get_next_song(self, session: Session) -> Optional[Song]:
+    def mark_current_song_as_played(self, *, session: Session) -> None:
+        if (current_song := self.get_current_song(session=session)) is None:
+            return
+        current_song.played = True
+        current_song.current_song = False
+
+        # Update user scores.
+        song_ratings: dict[User, Rating] = {
+            rating.user: rating.rating for rating in current_song.song.ratings
+        }
+
+        for user in self.users:
+            user.score += self.get_rating_score(
+                song_ratings.get(user.user, Rating.DONT_KNOW)
+            )
+
+        # Decrement snooze TTL by 1 for all snoozed songs.
+        snoozed_songs = (
+            session.query(KaraokeSessionSong)
+            .filter(KaraokeSessionSong.snooze_ttl > 0)
+            .all()
+        )
+
+        for snoozed_song in snoozed_songs:
+            snoozed_song.snooze_ttl -= 1
+
+        session.commit()
+
+    def get_current_song(
+        self, *, session: Session
+    ) -> Optional[KaraokeSessionSong]:
+        current_song = (
+            session.query(KaraokeSessionSong)
+            .filter(KaraokeSessionSong.karaoke_session_id == self.id)
+            .filter(KaraokeSessionSong.current_song == True)
+            .one_or_none()
+        )
+        return current_song
+
+    def skip_current_song(self, session: Session) -> None:
+        if (current_song := self.get_current_song(session=session)) is None:
+            return
+        current_song.played = True
+        current_song.current_song = False
+        session.commit()
+
+    def snooze_current_song(self, *, session: Session) -> None:
+        if (current_song := self.get_current_song(session=session)) is None:
+            return
+        current_song.current_song = False
+        current_song.snooze_ttl = SNOOZE_TTL
+        session.commit()
+
+    def get_next_song(self, *, session: Session) -> Optional[Song]:
         candidates: list[KaraokeSessionSong] = [
-            song for song in self.songs if not song.played
+            song
+            for song in self.songs
+            if not song.played
+            if not song.snooze_ttl
         ]
         sorted_users: list[KaraokeSessionUser] = sorted(
             self.users, key=lambda user: user.score
@@ -205,19 +266,10 @@ class KaraokeSession(Base):
             for s in sorted_candidates
             if self.get_combined_score(s) == max_score
         ]
+
         picked: KaraokeSessionSong = sorted_candidates[0]
         logger.info(f"Picked {picked.song.title}.")
         logger.info(f"Combined score: {self.get_combined_score(picked)}")
-        picked.played = True
-
-        song_ratings: dict[User, Rating] = {
-            rating.user: rating.rating for rating in picked.song.ratings
-        }
-
-        for user in self.users:
-            user.score += self.get_rating_score(
-                song_ratings.get(user.user, Rating.DONT_KNOW)
-            )
-
+        picked.current_song = True
         session.commit()
         return picked.song
