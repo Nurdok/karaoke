@@ -1,13 +1,13 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from enum import Enum
+from enum import IntEnum
 
 from karaoke.core.base import Base
 from karaoke.core.song import Song
 from karaoke.core.user import User
 
 
-class Rating(Enum):
+class Rating(IntEnum):
     UNKNOWN = 0
     DONT_KNOW = 1
     SING_ALONG = 2

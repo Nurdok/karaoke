@@ -163,10 +163,19 @@ def test_session_song_queue(session: Session) -> None:
     session.add_all(songs)
     session.commit()
 
+    # Multiple users can sing song1, so it should be included.
     rate_song(user1, song1, Rating.NEED_THE_MIC, session=session)
+    rate_song(user2, song1, Rating.CAN_TAKE_THE_MIC, session=session)
+
+    # Only one user can sing song2, so it should not be included.
+    # User3 can sing this song, but they aren't part of the session.
     rate_song(user1, song2, Rating.NEED_THE_MIC, session=session)
-    rate_song(user2, song1, Rating.NEED_THE_MIC, session=session)
-    rate_song(user3, song3, Rating.NEED_THE_MIC, session=session)
+    rate_song(user3, song2, Rating.CAN_TAKE_THE_MIC, session=session)
+
+    # Two users know song3, but no one can take the mic,
+    # so it should not be included.
+    rate_song(user1, song3, Rating.SING_ALONG, session=session)
+    rate_song(user2, song3, Rating.SING_ALONG, session=session)
 
     karaoke_session: KaraokeSession = create_karaoke_session(
         [user1.id, user2.id], session=session

@@ -1,4 +1,13 @@
-from sqlalchemy import ForeignKey, String, select, func
+from sqlalchemy import (
+    ForeignKey,
+    String,
+    select,
+    func,
+    text,
+    case,
+    cast,
+    Integer,
+)
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from enum import Enum
@@ -71,16 +80,29 @@ class KaraokeSession(Base):
         songs_ids_query = (
             select(
                 UserSongRating.song_id,
-                func.count("*"),
+                func.count("*").label("know_this_song_count"),
+                func.count(
+                    case(
+                        (UserSongRating.rating == Rating.CAN_TAKE_THE_MIC, 1),
+                        (UserSongRating.rating == Rating.NEED_THE_MIC, 1),
+                        else_=None,
+                    )
+                ).label("can_take_the_mic_count"),
             )
             .select_from(UserSongRating)
             .where(UserSongRating.user_id.in_(user_ids))
             .where(UserSongRating.rating != Rating.DONT_KNOW)
             .group_by(UserSongRating.song_id)
-            .having(func.count("*") > 1)
+            .having(
+                text("know_this_song_count > 1")
+            )  # At least 2 people know it
+            .having(
+                text("can_take_the_mic_count > 0")
+            )  # At least 1 person can sing it
             .subquery()
         )
 
+        logger.info(f"{session.query(songs_ids_query).all()=}")
         song_ids = (row[0] for row in session.query(songs_ids_query).all())
 
         for song_id in song_ids:
