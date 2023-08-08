@@ -172,7 +172,7 @@ def get_current_song() -> str:
         if (
             current_song := karaoke_session.get_current_song(session=session)
         ) is None:
-            return get_video_link(None)
+            return ""
 
         return get_video_link(current_song.song)
 
