@@ -75,7 +75,10 @@ def generate_static_playlist() -> Response | str:
         }
 
         def get_next_song() -> Optional[Song]:
-            return karaoke_session.get_next_song(session=session)
+            next_song = karaoke_session.get_next_song(session=session)
+            if next_song is not None:
+                karaoke_session.mark_current_song_as_played(session=session)
+            return next_song
 
         songs: list[Song] = [s for s in iter(get_next_song, None)]
         songs_with_stats: list[dict[str, Any]] = []

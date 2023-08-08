@@ -184,6 +184,7 @@ def _next_song(session_id: str) -> None:
             click.echo("No more songs in the queue.")
             return
         click.echo(f"Next song: {format_song(song)}")
+        karaoke_session.mark_current_song_as_played(session=session)
 
 
 @click.group()
