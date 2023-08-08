@@ -8,6 +8,7 @@ from sqlalchemy import (
     cast,
     Integer,
 )
+import math
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from enum import Enum
@@ -36,6 +37,7 @@ class KaraokeSessionUser(Base):
     )
     user: Mapped[User] = relationship()
     score: Mapped[int] = mapped_column(default=0)
+    stepped_out: Mapped[bool] = mapped_column(default=False)
 
     def __repr__(self) -> str:
         return f"KaraokeSessionUser(karaoke_session_id={self.karaoke_session_id}, user_id={self.user_id}, score={self.score})"
@@ -120,20 +122,30 @@ class KaraokeSession(Base):
         session.commit()
 
     def prune_candidates_for_user(
-        self, candidates: list[KaraokeSessionSong], user: User
+        self,
+        candidates: list[KaraokeSessionSong],
+        user: KaraokeSessionUser,
     ) -> list[KaraokeSessionSong]:
-        logger.info(f"Pruning {len(candidates)} candidates for {user.name}")
-        logger.info(f"\t{user.name} has {len(user.ratings)} ratings")
+        logger.info(
+            f"Pruning {len(candidates)} candidates for {user.user.name}"
+        )
+        logger.info(f"\t{user.user.name} has {len(user.user.ratings)} ratings")
         pruned_candidates: list[KaraokeSessionSong] = []
         user_ratings = {
             song_rating.song.id: song_rating.rating
-            for song_rating in user.ratings
+            for song_rating in user.user.ratings
         }
-        for rating in [
+        rating_order = [
             Rating.NEED_THE_MIC,
             Rating.CAN_TAKE_THE_MIC,
             Rating.SING_ALONG,
-        ]:
+            Rating.DONT_KNOW,
+        ]
+        # For users who stepped out, we want to choose songs they don't know.
+        if user.stepped_out:
+            rating_order.reverse()
+
+        for rating in rating_order:
             logger.info(f"\tSearching for rating {rating}")
             for song in candidates:
                 if user_ratings.get(song.song.id, Rating.DONT_KNOW) == rating:
@@ -152,7 +164,7 @@ class KaraokeSession(Base):
         # This user wouldn't benefit from any of the candidates, so we'll
         # just return the original list
         logger.info(
-            f"\t{user.name} doesn't know any of the candidates, not pruning."
+            f"\t{user.user.name} doesn't know any of the candidates, not pruning."
         )
         return candidates
 
@@ -238,9 +250,21 @@ class KaraokeSession(Base):
             if not song.played
             if not song.snooze_ttl
         ]
-        sorted_users: list[KaraokeSessionUser] = sorted(
-            self.users, key=lambda user: user.score
+
+        stepped_out_users: list[KaraokeSessionUser] = []
+        present_users: list[KaraokeSessionUser] = []
+
+        for user in self.users:
+            if user.stepped_out:
+                stepped_out_users.append(user)
+            else:
+                present_users.append(user)
+
+        sorted_present_users: list[KaraokeSessionUser] = sorted(
+            present_users, key=lambda user: user.score
         )
+
+        sorted_users = stepped_out_users + sorted_present_users
 
         logger.info(
             f"Getting next song from {len(candidates)} remaining unplayed songs"
@@ -250,7 +274,7 @@ class KaraokeSession(Base):
             return None
 
         for user in sorted_users:
-            candidates = self.prune_candidates_for_user(candidates, user.user)
+            candidates = self.prune_candidates_for_user(candidates, user)
             if len(candidates) == 1:
                 logger.info(f"Left with one candidate, stopping.")
                 break

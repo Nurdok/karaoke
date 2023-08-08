@@ -56,8 +56,38 @@
         }
     }
 
+    function stepOut() {
+        const data = {
+            "sessionId": "{{ session_id }}",
+            "userId": getUserOrRedirectToLoginPage().id,
+        }
+        fetch('/api/step-out', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+    }
+    document.getElementById('stepping-out').addEventListener('click', stepOut);
+
+    function stepBack() {
+        const data = {
+            "sessionId": "{{ session_id }}",
+            "userId": getUserOrRedirectToLoginPage().id,
+        }
+        fetch('/api/step-back', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+    }
+    document.getElementById('stepping-back').addEventListener('click', stepBack);
+
     updateCurrentlyPlaying();
-    setInterval(updateCurrentlyPlaying, 100);
+    setInterval(updateCurrentlyPlaying, 1000);
 
 </script>
 {% endblock %}

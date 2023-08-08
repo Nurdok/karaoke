@@ -5,7 +5,7 @@ import typing
 from flask import Flask, render_template, jsonify, request, Response, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from karaoke.core.session import KaraokeSession
+from karaoke.core.session import KaraokeSession, KaraokeSessionUser
 from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
@@ -283,6 +283,46 @@ def next_unrated_song() -> Response:
             "song_artist": song.artist,
         }
     )
+
+
+def set_step_out(data: dict[str, str], step_out: bool) -> Response:
+    user_id: int = int(data.get("userId", -1))
+    session_display_id: str = data.get("sessionId", "")
+    if user_id == -1 or session_display_id == "":
+        logger.info(f"Invalid step out request: {data}")
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_display_id)
+            .first()
+        )
+        user: Optional[KaraokeSessionUser] = (
+            session.query(KaraokeSessionUser)
+            .filter_by(user_id=user_id)
+            .filter_by(karaoke_session_id=karaoke_session.id)
+            .first()
+        )
+        if user is None:
+            return Response(status=400)
+
+        user.stepped_out = step_out
+        session.commit()
+    return Response(status=200)
+
+
+@app.route("/api/step-out", methods=["POST"])
+def step_out() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    return set_step_out(data, True)
+
+
+@app.route("/api/step-back", methods=["POST"])
+def step_back() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    return set_step_out(data, False)
 
 
 @app.route("/api/rate-song", methods=["POST"])
