@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <script src='{{ url_for("static", filename="main.js") }}'></script>
     <title>Video Player</title>
     <style>
         html {
@@ -10,13 +11,15 @@
         body {
             margin: 0;
             height: 100%;
+            font-family: Arial, sans-serif;
         }
         #strip {
             padding: 0.5em;
             display: flex;
             height: 50px;
             background-color: #ccc;
-            justify-content: space-evenly;
+            justify-content: space-between;
+            align-items: center;
         }
 
         #buttons {
@@ -43,6 +46,7 @@
 <body>
 <div id="strip">
     <p>Session: <b>{{ session_id }}</b></p>
+    <p id="song-details" style="font-size: 1.5em"></p>
 
     <div id="buttons">
         <button id="next-button"><u>N</u>ext</button>
@@ -62,6 +66,8 @@
     skipButton.addEventListener('click', skipAndGetNextVideo);
     snoozeButton.addEventListener('click', snoozeAndGetNextVideo);
 
+    let currentSong = {};
+
     function skipAndGetNextVideo() {
         getNextVideo('skip-and-get-next')
     }
@@ -76,16 +82,27 @@
 
     function getNextVideo(apiAction) {
         fetch(`/api/${apiAction}?s={{ session_id }}`)
-                .then(response => response.text())
-                .then(videoUrl => {
-                    if (videoUrl !== '') {
-                        videoArea.innerHTML = `<iframe width="100%" height="100%" src="${videoUrl}?autoplay=1" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
+                .then(response => response.json())
+                .then(song_json => {
+                    currentSong = parseJsonSong(song_json);
+                    if (currentSong.status === "OK") {
+                        videoArea.innerHTML = `<iframe width="100%" height="100%" src="${currentSong.video_link}?autoplay=1" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
                     }
+                    updateCurrentSongDetails();
                 })
                 .catch(error => {
                     console.log('Error loading video:', error);
                 });
 
+    }
+
+    function updateCurrentSongDetails() {
+        const songDetails = document.getElementById('song-details')
+        if (currentSong.status === "OK") {
+            songDetails.innerHTML = `<b>${currentSong.title}</b> by <b>${currentSong.artist}</b>`;
+        } else {
+            songDetails.innerHTML = `<b>${currentSong.title}</b>`
+        }
     }
 
     document.addEventListener('keydown', function (event) {
@@ -102,7 +119,7 @@
         }
     });
 
-    getNextVideo('get-current-song')
+    getNextVideo('get-current-song');
 
 </script>
 </body>

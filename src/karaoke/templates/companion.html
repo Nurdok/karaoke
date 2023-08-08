@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Companion{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        text-align: center;
+    }
+
+    .song-container {
+    }
+
+    .song-container h1 {
+        margin-bottom: 0;
+        word-break: break-word;
+    }
+
+    .song-container h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<span class="song-container" id="song-details"></span>
+
+<button id="stepping-out">I'm stepping out</button>
+<button id="stepping-back">I'm back!</button>
+
+<script>
+    let currentSong = {};
+
+    function updateCurrentlyPlaying() {
+        fetch(`/api/get-current-song?s={{ session_id }}`)
+                .then(response => response.json())
+                .then(song_json => {
+                    currentSong = parseJsonSong(song_json);
+                    updateCurrentSongDetails();
+                })
+                .catch(error => {
+                    console.log('Error loading song:', error);
+                });
+    }
+
+    function updateCurrentSongDetails() {
+        const songDetails = document.getElementById('song-details')
+        if (currentSong.id !== -1) {
+            songDetails.innerHTML = `
+                <h1 id="song-title">${currentSong.title}</h1>
+                <h3 id="song-artist">${currentSong.artist}</h3>
+            `;
+        } else {
+            songDetails.innerHTML = currentSong.title;
+        }
+    }
+
+    updateCurrentlyPlaying();
+    setInterval(updateCurrentlyPlaying, 100);
+
+</script>
+{% endblock %}

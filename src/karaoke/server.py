@@ -144,6 +144,38 @@ def index() -> str:
     return render_template("player.html", session_id=session_id)
 
 
+def no_more_songs() -> str:
+    return json.dumps(
+        {
+            "id": -1,
+            "status": "NO_MORE_SONGS",
+            "title": "No more songs in queue",
+        }
+    )
+
+
+def no_song_playing() -> str:
+    return json.dumps(
+        {
+            "id": -1,
+            "status": "NO_SONG_IS_CURRENTLY_PLAYING",
+            "title": "No song playing",
+        }
+    )
+
+
+def jsonify_song(song: Song) -> str:
+    return json.dumps(
+        {
+            "status": "OK",
+            "id": song.id,
+            "title": song.title,
+            "artist": song.artist,
+            "video_link": get_video_link(song),
+        }
+    )
+
+
 def get_video_link(song: Optional[Song]) -> str:
     if song is None:
         return "https://www.youtube.com/embed/T1XgFsitnQw"
@@ -172,9 +204,9 @@ def get_current_song() -> str:
         if (
             current_song := karaoke_session.get_current_song(session=session)
         ) is None:
-            return ""
+            return no_song_playing()
 
-        return get_video_link(current_song.song)
+        return jsonify_song(current_song.song)
 
 
 @app.route("/api/mark-as-played-and-get-next")
@@ -223,8 +255,10 @@ def next_video(mark_song: Callable) -> str:
 
         mark_song(karaoke_session, session=session)
         song: Optional[Song] = karaoke_session.get_next_song(session=session)
+        if song is None:
+            return no_more_songs()
 
-        return get_video_link(song)
+        return jsonify_song(song)
 
 
 @app.route("/api/next-unrated-song")
@@ -325,6 +359,12 @@ def start_session() -> Response | str:
     with sessionmaker(bind=engine)() as session:
         users = session.query(User).all()
     return render_template("start-session.html", users=users)
+
+
+@app.route("/companion")
+def companion() -> Response | str:
+    session_id: str = request.args.get("s", "")
+    return render_template("companion.html", session_id=session_id)
 
 
 def start_server() -> None:

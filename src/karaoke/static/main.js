@@ -75,3 +75,21 @@ function toRatingDisplayString(rating_int) {
     }
 }
 
+function parseJsonSong(song) {
+    if (song.status === 'OK') {
+        return {
+            'status': song.status,
+            'id': song.id,
+            'title': song.title,
+            'artist': song.artist,
+            'video_link': song.video_link,
+        };
+    }
+    return {
+        'status': song.status,
+        'id': null,
+        'title': song.title,
+        'artist': '',
+        'video_link': '',
+    };
+}
