@@ -12,11 +12,23 @@
             height: 100%;
         }
         #strip {
+            padding: 0.5em;
             display: flex;
             height: 50px;
             background-color: #ccc;
-            padding: 10px;
             justify-content: space-evenly;
+        }
+
+        #buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            column-gap: 1em;
+        }
+
+        #buttons button {
+            font-size: 1.5em;
+            padding: 0.2em;
         }
 
         #video-area {
@@ -32,9 +44,11 @@
 <div id="strip">
     <p>Session: <b>{{ session_id }}</b></p>
 
-    <button id="next-button"><u>N</u>ext</button>
-    <button id="skip-button"><u>S</u>kip</button>
-    <button id="snooze-button">Snoo<u>z</u>e</button>
+    <div id="buttons">
+        <button id="next-button"><u>N</u>ext</button>
+        <button id="skip-button"><u>S</u>kip</button>
+        <button id="snooze-button">Snoo<u>z</u>e</button>
+    </div>
 </div>
 <div id="video-area"></div>
 
