@@ -228,6 +228,10 @@ class KaraokeSession(Base):
         session.commit()
 
     def get_next_song(self, *, session: Session) -> Optional[Song]:
+        if self.get_current_song(session=session) is not None:
+            logger.info(f"Current song is still playing.")
+            return None
+
         candidates: list[KaraokeSessionSong] = [
             song
             for song in self.songs

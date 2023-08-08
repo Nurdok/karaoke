@@ -10,7 +10,7 @@ from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
 from karaoke.core.rating import UserSongRating, Rating
-from typing import Optional, Any
+from typing import Optional, Any, Callable
 import logging
 
 if typing.TYPE_CHECKING:  # pragma: no cover
@@ -144,8 +144,18 @@ def index() -> str:
     return render_template("player.html", session_id=session_id)
 
 
-@app.route("/api/next_video")
-def next_video() -> str:
+def get_video_link(song: Optional[Song]) -> str:
+    if song is None:
+        return "https://www.youtube.com/embed/T1XgFsitnQw"
+
+    if not song.video_link.startswith("http"):
+        return f"https://www.youtube.com/embed/{song.video_link}"
+
+    return song.video_link
+
+
+@app.route("/api/get-current-song")
+def get_current_song() -> str:
     session_id: str = request.args.get("s", "")
     logger.info(f"Getting next video for session {session_id}")
 
@@ -159,14 +169,62 @@ def next_video() -> str:
         if karaoke_session is None:
             return ""
 
+        if (
+            current_song := karaoke_session.get_current_song(session=session)
+        ) is None:
+            return get_video_link(None)
+
+        return get_video_link(current_song.song)
+
+
+@app.route("/api/mark-as-played-and-get-next")
+def mark_as_played_and_get_next() -> str:
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.mark_current_song_as_played(session=session)
+
+    return next_video(mark_song)
+
+
+@app.route("/api/snooze-and-get-next")
+def snooze_and_get_next() -> str:
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.snooze_current_song(session=session)
+
+    return next_video(mark_song)
+
+
+@app.route("/api/skip-and-get-next")
+def skip_and_get_next() -> str:
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.skip_current_song(session=session)
+
+    return next_video(mark_song)
+
+
+def next_video(mark_song: Callable) -> str:
+    session_id: str = request.args.get("s", "")
+    logger.info(f"Getting next video for session {session_id}")
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_id)
+            .first()
+        )
+        if karaoke_session is None:
+            return ""
+
+        mark_song(karaoke_session, session=session)
         song: Optional[Song] = karaoke_session.get_next_song(session=session)
-        if song is None:
-            return "https://www.youtube.com/embed/T1XgFsitnQw"
 
-        if not song.video_link.startswith("http"):
-            return f"https://www.youtube.com/embed/{song.video_link}"
-
-        return song.video_link
+        return get_video_link(song)
 
 
 @app.route("/api/next-unrated-song")

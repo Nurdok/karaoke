@@ -33,19 +33,35 @@
     <p>Session: <b>{{ session_id }}</b></p>
 
     <button id="next-button"><u>N</u>ext</button>
+    <button id="skip-button"><u>S</u>kip</button>
+    <button id="snooze-button">Snoo<u>z</u>e</button>
 </div>
 <div id="video-area"></div>
 
 <script>
     const nextButton = document.getElementById('next-button');
+    const skipButton = document.getElementById('skip-button');
+    const snoozeButton = document.getElementById('snooze-button');
     const videoArea = document.getElementById('video-area');
 
-    nextButton.addEventListener('click', loadNextVideo);
+    nextButton.addEventListener('click', markAsPlayedAndGetNextVideo);
+    skipButton.addEventListener('click', skipAndGetNextVideo);
+    snoozeButton.addEventListener('click', snoozeAndGetNextVideo);
 
-    function loadNextVideo() {
-        // Send a request to the server to get the next YouTube video URL
-        // Replace 'YOUR_SERVER_URL' with the actual URL of your server-side script
-        fetch('/api/next_video?s={{ session_id }}')
+    function skipAndGetNextVideo() {
+        getNextVideo('skip-and-get-next')
+    }
+
+    function snoozeAndGetNextVideo() {
+        getNextVideo('snooze-and-get-next')
+    }
+
+    function markAsPlayedAndGetNextVideo() {
+        getNextVideo('mark-as-played-and-get-next')
+    }
+
+    function getNextVideo(apiAction) {
+        fetch(`/api/${apiAction}?s={{ session_id }}`)
                 .then(response => response.text())
                 .then(videoUrl => {
                     videoArea.innerHTML = `<iframe width="100%" height="100%" src="${videoUrl}?autoplay=1" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
@@ -53,15 +69,24 @@
                 .catch(error => {
                     console.log('Error loading video:', error);
                 });
+
     }
 
     document.addEventListener('keydown', function (event) {
         var key = event.key;
 
         if (key === 'n') {
-            loadNextVideo();
+            markAsPlayedAndGetNextVideo();
+        }
+        if (key === 's') {
+            skipAndGetNextVideo();
+        }
+        if (key === 'z') {
+            snoozeAndGetNextVideo();
         }
     });
+
+    getNextVideo('get-current-song')
 
 </script>
 </body>
