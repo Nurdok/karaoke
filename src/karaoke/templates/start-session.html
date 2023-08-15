@@ -2,6 +2,26 @@
 
 {% block subtitle %}Start Session{% endblock %}
 
+{% block head %}
+<style>
+    #session-id-container {
+        display: flex;
+        flex-flow: column;
+        align-items: center;
+    }
+
+    #session-id-container h1 {
+        margin: 0;
+        padding: 0
+    }
+
+    #companion-qr-code {
+        margin-top: 20px;
+    }
+
+</style>
+{% endblock %}
+
 {% block content %}
 <div id="start-session-form">
     <p>Who's singing tonight?</p>
@@ -20,8 +40,11 @@
 </div>
 
 <div id="session-details">
-    <p>Your session ID is:</p>
-    <h1 id="session-id"></h1>
+    <div id="session-id-container">
+        <p>Your session ID is:</p>
+        <h1 id="session-id"></h1>
+        <span id="companion-qr-code"></span>
+    </div>
 
     <form id="goto-session" action="/player">
         <input type="hidden" id="hidden-session-id" name="s" value="" />
@@ -36,6 +59,8 @@
     </ul>
     </p>
 </div>
+
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 
 <script>
     let user = getUserOrRedirectToLoginPage();
@@ -74,6 +99,8 @@
                     document.getElementById("next-link").href = "/next?s=" + response_data.session_id;
                     document.getElementById("skip-link").href = "/skip?s=" + response_data.session_id;
                     document.getElementById("snooze-link").href = "/snooze?s=" + response_data.session_id;
+
+                    new QRCode(document.getElementById("companion-qr-code"), "http://" + location.hostname + "/companion?s=" + response_data.session_id);
                 });
 
     }
