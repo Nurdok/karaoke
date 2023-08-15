@@ -36,18 +36,21 @@ class Song(Base):
         return get_video_link(self.video_link, embed_yt_videos=embed_yt_videos)
 
 
-def get_video_link(url, embed_yt_videos: bool = False) -> str:
-    video_id: str
+def is_youtube_url(url: str) -> bool:
+    return "youtube.com" in url or "youtu.be" in url
 
-    if "http" not in url:
-        # Assume this is a YouTube video ID
-        video_id = url
-    else:
-        try:
-            video_id = pytube.extract.video_id(url)
-        except BaseException:
-            # This is probably not a YouTube video, so just return the link
-            return url
+
+def is_http(url: str) -> bool:
+    return "http" in url
+
+
+def get_video_link(url: str, embed_yt_videos: bool = False) -> str:
+    if is_http(url) and not is_youtube_url(url):
+        return url
+
+    video_id: str = (
+        pytube.extract.video_id(url) if is_youtube_url(url) else url
+    )
 
     yt: pytube.YouTube = pytube.YouTube.from_id(video_id)
     return yt.embed_url if embed_yt_videos else yt.watch_url
