@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import expression
 
 
 # revision identifiers, used by Alembic.
@@ -23,7 +24,10 @@ def upgrade() -> None:
     op.add_column(
         "karaoke_session_song",
         sa.Column(
-            "current_song", sa.Boolean(), nullable=False, server_default=False
+            "current_song",
+            sa.Boolean(),
+            nullable=False,
+            server_default=expression.false(),
         ),
     )
     op.add_column(
@@ -35,7 +39,10 @@ def upgrade() -> None:
     op.add_column(
         "karaoke_session_user",
         sa.Column(
-            "stepped_out", sa.Boolean(), nullable=False, server_default=False
+            "stepped_out",
+            sa.Boolean(),
+            nullable=False,
+            server_default=expression.false(),
         ),
     )
     # ### end Alembic commands ###
