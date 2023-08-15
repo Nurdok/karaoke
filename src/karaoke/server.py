@@ -164,14 +164,14 @@ def no_song_playing() -> str:
     )
 
 
-def jsonify_song(song: Song) -> str:
+def jsonify_song(song: Song, embed_yt_videos: bool) -> str:
     return json.dumps(
         {
             "status": "OK",
             "id": song.id,
             "title": song.title,
             "artist": song.artist,
-            "video_link": get_video_link(song),
+            "video_link": song.get_video_link(embed_yt_videos=embed_yt_videos),
         }
     )
 
@@ -206,7 +206,7 @@ def get_current_song() -> str:
         ) is None:
             return no_song_playing()
 
-        return jsonify_song(current_song.song)
+        return jsonify_song(current_song.song, embed_yt_videos=False)
 
 
 @app.route("/api/mark-as-played-and-get-next")
@@ -216,7 +216,21 @@ def mark_as_played_and_get_next() -> str:
     ) -> None:
         karaoke_session.mark_current_song_as_played(session=session)
 
-    return next_video(mark_song)
+    return next_video(mark_song, embed_yt_videos=True)
+
+
+@app.route("/next")
+def mark_as_played_and_redirect_to_next() -> "BaseResponse":
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.mark_current_song_as_played(session=session)
+
+    return redirect(
+        json.loads(next_video(mark_song, embed_yt_videos=False)).get(
+            "video_link"
+        )
+    )
 
 
 @app.route("/api/snooze-and-get-next")
@@ -226,7 +240,21 @@ def snooze_and_get_next() -> str:
     ) -> None:
         karaoke_session.snooze_current_song(session=session)
 
-    return next_video(mark_song)
+    return next_video(mark_song, embed_yt_videos=True)
+
+
+@app.route("/snooze")
+def snooze() -> "BaseResponse":
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.snooze_current_song(session=session)
+
+    return redirect(
+        json.loads(next_video(mark_song, embed_yt_videos=False)).get(
+            "video_link"
+        )
+    )
 
 
 @app.route("/api/skip-and-get-next")
@@ -236,16 +264,30 @@ def skip_and_get_next() -> str:
     ) -> None:
         karaoke_session.skip_current_song(session=session)
 
-    return next_video(mark_song)
+    return next_video(mark_song, embed_yt_videos=True)
 
 
-def next_video(mark_song: Callable) -> str:
+@app.route("/skip")
+def skip() -> "BaseResponse":
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.skip_current_song(session=session)
+
+    return redirect(
+        json.loads(next_video(mark_song, embed_yt_videos=False)).get(
+            "video_link"
+        )
+    )
+
+
+def next_video(mark_song: Callable, embed_yt_videos: bool) -> str:
     session_id: str = request.args.get("s", "")
     logger.info(f"Getting next video for session {session_id}")
 
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
+        karaoke_session: Optional[KaraokeSession] = (
             session.query(KaraokeSession)
             .filter_by(display_id=session_id)
             .first()
@@ -258,7 +300,7 @@ def next_video(mark_song: Callable) -> str:
         if song is None:
             return no_more_songs()
 
-        return jsonify_song(song)
+        return jsonify_song(song, embed_yt_videos=embed_yt_videos)
 
 
 @app.route("/api/next-unrated-song")
@@ -299,6 +341,10 @@ def set_step_out(data: dict[str, str], step_out: bool) -> Response:
             .filter_by(display_id=session_display_id)
             .first()
         )
+        if karaoke_session is None:
+            logger.info(f"Invalid step out request: {data}")
+            return Response(status=400)
+
         user: Optional[KaraokeSessionUser] = (
             session.query(KaraokeSessionUser)
             .filter_by(user_id=user_id)

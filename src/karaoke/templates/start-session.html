@@ -27,6 +27,14 @@
         <input type="hidden" id="hidden-session-id" name="s" value="" />
         <button type="submit">Go to player!</button>
     </form>
+    <p>
+        Alternatively, you can bookmark these links:
+    <ul>
+        <li><a href="" id="next-link">Next</a></li>
+        <li><a href="" id="skip-link">Skip</a></li>
+        <li><a href="" id="snooze-link">Snooze</a></li>
+    </ul>
+    </p>
 </div>
 
 <script>
@@ -62,6 +70,10 @@
                     document.getElementById("session-details").style.display = "block";
                     document.getElementById("start-session-form").style.display = "none";
                     document.getElementById("hidden-session-id").value = response_data.session_id;
+
+                    document.getElementById("next-link").href = "/next?s=" + response_data.session_id;
+                    document.getElementById("skip-link").href = "/skip?s=" + response_data.session_id;
+                    document.getElementById("snooze-link").href = "/snooze?s=" + response_data.session_id;
                 });
 
     }
