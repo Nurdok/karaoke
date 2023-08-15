@@ -33,7 +33,7 @@ def upgrade() -> None:
     op.add_column(
         "karaoke_session_song",
         sa.Column(
-            "snooze_ttl", sa.Integer(), nullable=False, server_default=0
+            "snooze_ttl", sa.Integer(), nullable=False, server_default="0"
         ),
     )
     op.add_column(
