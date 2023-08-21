@@ -93,3 +93,20 @@ function parseJsonSong(song) {
         'video_link': '',
     };
 }
+function rateSong(user_id, song_id, rating_int) {
+    let ratingString = toRatingEnumString(rating_int)
+    const data = {
+        userId: user_id,
+        songId: song_id,
+        rating: ratingString
+    };
+    console.log(data);
+
+    return fetch('/api/rate-song', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+}

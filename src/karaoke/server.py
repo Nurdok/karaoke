@@ -378,16 +378,18 @@ def rate_song() -> Response:
     song_id: int = int(data.get("songId", -1))
     rating_str: str = data.get("rating", "")
     if user_id == -1 or song_id == -1 or rating_str == "":
+        print(f"Invalid rate song request: {data}")
         return Response(status=400)
 
     rating: Rating = Rating[rating_str]
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
-        if rating == Rating.UNKNOWN:
-            session.query(UserSongRating).filter_by(
-                user_id=user_id, song_id=song_id
-            ).delete()
-        else:
+        # Delete any existing rating
+        session.query(UserSongRating).filter_by(
+            user_id=user_id, song_id=song_id
+        ).delete()
+
+        if rating != Rating.UNKNOWN:
             user_rating: UserSongRating = UserSongRating(
                 user_id=user_id,
                 song_id=song_id,
