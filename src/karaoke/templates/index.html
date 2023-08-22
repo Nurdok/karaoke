@@ -33,12 +33,12 @@
 {% block content %}
 <p><span id="username"></span>, what would you like to do?</p>
 <div class="actions">
-    <form action="/rate"><button type="submit" class="btn">Rate Songs</button></form>
+    <form action="/rate"><button type="submit" class="btn">Rate songs</button></form>
     <form action="/songs" id="songs-form" method="GET">
         <input type="hidden" id="user-id" name="u"/>
-        <button type="submit" class="btn">See Rated Songs</button>
+        <button type="submit" class="btn">View songs</button>
     </form>
-    <form action="/add-song"><button type="submit" class="btn">Add Song</button></form>
+    <form action="/add-song"><button type="submit" class="btn">Add song</button></form>
     <form action="/users"><button type="submit" class="btn">Switch user</button></form>
     <form action="/start-session"><button type="submit" class="btn">Start session</button></form>
 </div>
