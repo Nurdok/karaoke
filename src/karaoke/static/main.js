@@ -83,6 +83,7 @@ function parseJsonSong(song) {
             'title': song.title,
             'artist': song.artist,
             'video_link': song.video_link,
+            'ratings': song.ratings,
         };
     }
     return {
@@ -93,6 +94,7 @@ function parseJsonSong(song) {
         'video_link': '',
     };
 }
+
 function rateSong(user_id, song_id, rating_int) {
     let ratingString = toRatingEnumString(rating_int)
     const data = {

@@ -165,6 +165,14 @@ def no_song_playing() -> str:
 
 
 def jsonify_song(song: Song, embed_yt_videos: bool) -> str:
+    ratings = [
+        {
+            "user_id": rating.user_id,
+            "user_name": rating.user.name,
+            "rating": rating.rating,
+        }
+        for rating in song.ratings
+    ]
     return json.dumps(
         {
             "status": "OK",
@@ -172,6 +180,7 @@ def jsonify_song(song: Song, embed_yt_videos: bool) -> str:
             "title": song.title,
             "artist": song.artist,
             "video_link": song.get_video_link(embed_yt_videos=embed_yt_videos),
+            "ratings": ratings,
         }
     )
 

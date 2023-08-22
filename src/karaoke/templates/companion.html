@@ -20,14 +20,38 @@
         margin-top: 0;
         margin-bottom: 20px;
     }
+
+    #rating-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: left;
+        align-items: flex-start;
+    }
+
+    .rating {
+        font-size: 0.7em;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px 20px;
+        font-size: calc(26px + 1vw);
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
 </style>
 {% endblock %}
 
 {% block content %}
 <span class="song-container" id="song-details"></span>
 
-<button id="stepping-out">I'm stepping out</button>
-<button id="stepping-back">I'm back!</button>
+<span id="step-out-container">
+    <button id="stepping-out" class="btn">I'm stepping out</button>
+    <button id="stepping-back" class="btn">I'm back!</button>
+</span>
+
+<div id="rating-container"></div>
 
 <script>
     let currentSong = {};
@@ -45,16 +69,31 @@
     }
 
     function updateCurrentSongDetails() {
-        const songDetails = document.getElementById('song-details')
+        const songDetails = document.getElementById('song-details');
+        const ratingsContainer = document.getElementById('rating-container');
         if (currentSong.id !== -1) {
             songDetails.innerHTML = `
                 <h1 id="song-title">${currentSong.title}</h1>
                 <h3 id="song-artist">${currentSong.artist}</h3>
             `;
+            ratingsContainer.innerHTML = '';
+
+            for (let i = 0; i < currentSong.ratings.length; i++) {
+                let rating = currentSong.ratings[i];
+                ratingsContainer.innerHTML += `
+                    <span class="rating">
+                        ${rating.user_name} rated this song "${toRatingDisplayString(rating.rating)}"
+                    </span>
+                `;
+            }
         } else {
             songDetails.innerHTML = currentSong.title;
         }
     }
+
+    let stepOutBtn = document.getElementById('stepping-out');
+    let stepBackBtn = document.getElementById('stepping-back');
+    let body = document.getElementsByTagName('body')[0];
 
     function stepOut() {
         const data = {
@@ -68,8 +107,15 @@
             },
             body: JSON.stringify(data)
         })
+                .then(response => {
+                    if (response.ok) {
+                        stepBackBtn.style.display = 'inline-block';
+                        stepOutBtn.style.display = 'none';
+                        body.style.backgroundColor = 'rgb(255 184 184)'
+                    }
+                });
     }
-    document.getElementById('stepping-out').addEventListener('click', stepOut);
+    stepOutBtn.addEventListener('click', stepOut);
 
     function stepBack() {
         const data = {
@@ -83,8 +129,16 @@
             },
             body: JSON.stringify(data)
         })
+                .then(response => {
+                    if (response.ok) {
+                        stepBackBtn.style.display = 'none';
+                        stepOutBtn.style.display = 'inline-block';
+                        body.style.backgroundColor = 'rgb(255 255 255)'
+                    }
+                });
     }
-    document.getElementById('stepping-back').addEventListener('click', stepBack);
+    stepBackBtn.addEventListener('click', stepBack);
+    stepBackBtn.style.display = 'none';
 
     updateCurrentlyPlaying();
     setInterval(updateCurrentlyPlaying, 1000);
