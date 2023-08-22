@@ -112,3 +112,8 @@ function rateSong(user_id, song_id, rating_int) {
         body: JSON.stringify(data)
     })
 }
+
+function getCurrentScores(session_display_id) {
+    return fetch(`/api/get-current-scores?s=${session_display_id}`)
+        .then(response => response.json());
+}

@@ -18,14 +18,14 @@
 
     .song-container h3 {
         margin-top: 0;
-        margin-bottom: 20px;
+        margin-bottom: 2.5em;
     }
 
     #rating-container {
         display: flex;
         flex-direction: column;
         justify-content: left;
-        align-items: flex-start;
+        align-items: center;
     }
 
     .rating {
@@ -40,6 +40,27 @@
         margin-bottom: 20px;
     }
 
+    #leaderboard-container {
+        margin-bottom: 2em;
+        margin-top: 2em;
+    }
+
+    #leaderboard-table {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    .user-score {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 40%;
+    }
+
 </style>
 {% endblock %}
 
@@ -51,17 +72,30 @@
     <button id="stepping-back" class="btn">I'm back!</button>
 </span>
 
+<div id="leaderboard-container">
+    <h3>Current scores</h3>
+    <div id="leaderboard-table">
+    </div>
+</div>
+
 <div id="rating-container"></div>
+
 
 <script>
     let currentSong = {};
+    let session_id = "{{ session_id }}";
 
     function updateCurrentlyPlaying() {
-        fetch(`/api/get-current-song?s={{ session_id }}`)
+        fetch(`/api/get-current-song?s=${session_id}`)
                 .then(response => response.json())
                 .then(song_json => {
                     currentSong = parseJsonSong(song_json);
                     updateCurrentSongDetails();
+
+                    getCurrentScores(session_id)
+                            .then(scores => {
+                                updateCurrentScores(scores);
+                            });
                 })
                 .catch(error => {
                     console.log('Error loading song:', error);
@@ -88,6 +122,20 @@
             }
         } else {
             songDetails.innerHTML = currentSong.title;
+        }
+    }
+
+    function updateCurrentScores(scores) {
+        const leaderboardTable = document.getElementById('leaderboard-table');
+        leaderboardTable.innerHTML = '';
+        for (let i = 0; i < scores.length; i++) {
+            let score = scores[i];
+            leaderboardTable.innerHTML += `
+                <span class="user-score">
+                    <span>${score.user_name}</span>
+                    <span>${score.score}</span>
+                </span>
+            `;
         }
     }
 

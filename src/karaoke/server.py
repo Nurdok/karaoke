@@ -198,7 +198,6 @@ def get_video_link(song: Optional[Song]) -> str:
 @app.route("/api/get-current-song")
 def get_current_song() -> str:
     session_id: str = request.args.get("s", "")
-    logger.info(f"Getting next video for session {session_id}")
 
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
@@ -216,6 +215,34 @@ def get_current_song() -> str:
             return no_song_playing()
 
         return jsonify_song(current_song.song, embed_yt_videos=False)
+
+
+@app.route("/api/get-current-scores")
+def get_current_scores() -> str:
+    session_id: str = request.args.get("s", "")
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_id)
+            .first()
+        )
+        if karaoke_session is None:
+            return Response(status=400)
+
+        scores: list[dict[str, Any]] = []
+        for user in karaoke_session.users:
+            scores.append(
+                {
+                    "user_id": user.user_id,
+                    "user_name": user.user.name,
+                    "score": user.score,
+                }
+            )
+
+        logger.info(f"{scores}")
+        return json.dumps(scores)
 
 
 @app.route("/api/mark-as-played-and-get-next")
