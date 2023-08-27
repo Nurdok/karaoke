@@ -185,16 +185,6 @@ def jsonify_song(song: Song, embed_yt_videos: bool) -> str:
     )
 
 
-def get_video_link(song: Optional[Song]) -> str:
-    if song is None:
-        return "https://www.youtube.com/embed/T1XgFsitnQw"
-
-    if not song.video_link.startswith("http"):
-        return f"https://www.youtube.com/embed/{song.video_link}"
-
-    return song.video_link
-
-
 @app.route("/api/get-current-song")
 def get_current_song() -> str:
     session_id: str = request.args.get("s", "")
@@ -359,6 +349,7 @@ def next_unrated_song() -> Response:
             "song_id": song.id,
             "song_title": song.title,
             "song_artist": song.artist,
+            "video_link": song.get_video_link(embed_yt_videos=True),
         }
     )
 

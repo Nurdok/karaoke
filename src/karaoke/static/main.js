@@ -117,3 +117,8 @@ function getCurrentScores(session_display_id) {
     return fetch(`/api/get-current-scores?s=${session_display_id}`)
         .then(response => response.json());
 }
+
+function getVideoEmbedInnerHtml(video_link, autoplay = false) {
+    let autoplay_int = autoplay ? 1 : 0;
+    return `<iframe width="100%" height="100%" src="${video_link}?autoplay=${autoplay}" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
+}

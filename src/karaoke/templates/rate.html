@@ -38,6 +38,7 @@
         padding: 10px 20px;
         font-size: calc(26px + 1vw);
         cursor: pointer;
+        margin-bottom: 60px;
     }
 
     @media (hover: none) {
@@ -72,6 +73,7 @@
         <button class="rating-button" onclick="rateDisplayedSong(3)">I can take the mic<span class="hotkey"><br/>(3)</span></button>
         <button class="rating-button" onclick="rateDisplayedSong(4)">I NEED THE MIC<span class="hotkey"><br/>(4)</span></button>
     </div>
+    <div id="video-area"></div>
     <div id="previous-song-container" style="display: none">
         <p>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</p>
         <button onclick="undoRating()">Undo<span class="hotkey">(<kbd>Ctrl</kbd>+<kbd>z</kbd>)</span></button>
@@ -133,6 +135,14 @@
         document.getElementById('song-artist').textContent = artist;
     }
 
+    function updateSongVideo(video_link) {
+        document.getElementById('video-area').innerHTML = getVideoEmbedInnerHtml(video_link, /*autoplay=*/false);
+    }
+
+    function disableVideo() {
+        document.getElementById('video-area').innerHTML = "";
+    }
+
     function updatePreviousSongTitle(title) {
         document.getElementById('previous-song-title').textContent = title;
     }
@@ -180,12 +190,14 @@
         if (isValidSongId(currentSong.id)) {
             updateSongTitle(currentSong.title);
             updateSongArtist(currentSong.artist);
+            updateSongVideo(currentSong.video_link);
             setActionTextToRate();
             setActionLineDisplay(true);
             showRatingButtons();
         } else {
             updateSongTitle("");
             updateSongArtist("");
+            disableVideo();
             setActionTextToRatedAll();
             setActionLineDisplay(true);
             hideRatingButtons();
@@ -211,6 +223,7 @@
                         id: song.song_id,
                         title: song.song_title,
                         artist: song.song_artist,
+                        video_link: song.video_link,
                         rating: 0
                     });
                     updateSongDetails();
