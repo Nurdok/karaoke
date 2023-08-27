@@ -482,6 +482,20 @@ def companion() -> Response | str:
     return render_template("companion.html", session_id=session_id)
 
 
+@app.route("/reset-ratings")
+def reset_ratings() -> Response | str:
+    user_id: int = int(request.args.get("u", -1))
+    if user_id == -1:
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        session.query(UserSongRating).filter_by(user_id=user_id).delete()
+        session.commit()
+
+    return redirect("/rate")
+
+
 def start_server() -> None:
     app.run(host="0.0.0.0", port=5000, debug=True)
 

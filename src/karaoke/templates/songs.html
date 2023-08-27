@@ -12,6 +12,22 @@
         margin-bottom: 10px;
         font-size: 0.75em;
     }
+
+    .btn {
+        width: 100%;
+        padding: 10px 20px;
+        font-size: calc(26px + 1vw);
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+    #reset-ratings-btn {
+        display: block;
+    }
+
+    #reset-ratings-confirm-btn {
+        display: none;
+    }
 </style>
 {% endblock %}
 
@@ -40,6 +56,10 @@
     </div>
     {% endfor %}
 </div>
+<span id="reset-ratings-container">
+    <button id="reset-ratings-btn" class="btn">Reset all my song ratings</button>
+    <button id="reset-ratings-confirm-btn" class="btn">Click again to reset. This cannot be undone!</button>
+</span>
 
 <script>
     function onRatingChange(select_id) {
@@ -80,6 +100,20 @@
     for (let i =0; i < change_rating_buttons.length; i++) {
         change_rating_buttons[i].style.visibility = "hidden";
     }
+
+    let resetRatingsBtn = document.getElementById("reset-ratings-btn");
+    let resetRatingsConfirmBtn = document.getElementById("reset-ratings-confirm-btn");
+
+    function resetRating() {
+        resetRatingsBtn.style.display = "none";
+        resetRatingsConfirmBtn.style.display = "block";
+    }
+    resetRatingsBtn.addEventListener("click", resetRating);
+
+    function resetRatingConfirm() {
+        window.location.href = "/reset-ratings?u={{user.id}}";
+    }
+    resetRatingsConfirmBtn.addEventListener("click", resetRatingConfirm);
 
 </script>
 {% endblock %}
