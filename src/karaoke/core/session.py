@@ -5,13 +5,9 @@ from sqlalchemy import (
     func,
     text,
     case,
-    cast,
-    Integer,
 )
-import math
 from typing import Optional
 from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
-from enum import Enum
 import random
 import logging
 
@@ -120,6 +116,20 @@ class KaraokeSession(Base):
             session.add(kss)
 
         session.commit()
+        self.snooze_top_songs(10)
+        session.commit()
+
+    def snooze_top_songs(self, n):
+        """Snooze the top `n` songs for a more balanced session."""
+        sorted_candidates = list(self.songs)
+        sorted_candidates.sort(
+            key=lambda s: self.get_combined_score(s), reverse=True
+        )
+        for index, song in enumerate(reversed(sorted_candidates[:n])):
+            song.snooze_ttl = random.randrange(5, 20 - index)
+
+    def get_played_songs_count(self):
+        return len([song for song in self.songs if song.played])
 
     def prune_candidates_for_user(
         self,
@@ -296,6 +306,7 @@ class KaraokeSession(Base):
         ]
 
         picked: KaraokeSessionSong = sorted_candidates[0]
+        logger.warn(f"Picked song from {len(sorted_candidates)} candidates")
         logger.info(f"Picked {picked.song.title}.")
         logger.info(f"Combined score: {self.get_combined_score(picked)}")
         picked.current_song = True
