@@ -270,6 +270,10 @@ class KaraokeSession(Base):
             else:
                 present_users.append(user)
 
+        # Shuffle the present users before sorting so that we don't always pick
+        # the user with the lowest ID in the case of a tie (`sorted` is
+        # stable).
+        random.shuffle(present_users)
         sorted_present_users: list[KaraokeSessionUser] = sorted(
             present_users, key=lambda user: user.score
         )
