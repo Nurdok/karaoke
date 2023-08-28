@@ -44,6 +44,7 @@
                 <input type="hidden" name="user_id" value="{{ user_id }}">
                 <select name="rating" class="rating-dropdown" id="rating-dropdown-{{song.id}}" onchange="onRatingChange('rating-dropdown-{{song.id}}')">
                     {{song.rating}}
+                  <option class="rating-option" value="0" {% if song.rating == 1 %}selected{% endif %}></option>
                   <option class="rating-option" value="1" {% if song.rating == 1 %}selected{% endif %}></option>
                   <option class="rating-option" value="2" {% if song.rating == 2 %}selected{% endif %}></option>
                   <option class="rating-option" value="3" {% if song.rating == 3 %}selected{% endif %}></option>

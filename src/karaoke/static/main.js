@@ -63,7 +63,7 @@ function toRatingEnumString(rating_int) {
 function toRatingDisplayString(rating_int) {
     switch (rating_int) {
         case 0:
-            return 'Unknown';
+            return 'Not rated';
         case 1:
             return 'I don\'t know this song';
         case 2:
