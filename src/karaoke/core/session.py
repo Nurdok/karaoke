@@ -135,7 +135,7 @@ class KaraokeSession(Base):
         for song in self.songs:
             know_count = 0
             for rating in song.song.ratings:
-                if rating.rating != Rating.DONT_KNOW:
+                if rating.rating not in (Rating.DONT_KNOW, Rating.UNKNOWN):
                     know_count += 1
             if know_count < know_count_threshold:
                 song.snooze_ttl = random.randrange(10, 20)
