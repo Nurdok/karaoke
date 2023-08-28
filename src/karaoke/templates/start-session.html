@@ -43,7 +43,10 @@
     <div id="session-id-container">
         <p>Your session ID is:</p>
         <h1 id="session-id"></h1>
+        <p>Enter companion mode on your phone by scanning this QR code:</p>
         <span id="companion-qr-code"></span>
+        <p>Or click on <a href="" id="companion-link">this link</a></p>
+
     </div>
 
     <form id="goto-session" action="/player">
@@ -100,7 +103,9 @@
                     document.getElementById("skip-link").href = "/skip?s=" + response_data.session_id;
                     document.getElementById("snooze-link").href = "/snooze?s=" + response_data.session_id;
 
+                    let companion_link = "http://" + location.hostname + "/companion?s=" + response_data.session_id;
                     new QRCode(document.getElementById("companion-qr-code"), "http://" + location.hostname + "/companion?s=" + response_data.session_id);
+                    document.getElementById("companion-link").href = companion_link;
                 });
 
     }
