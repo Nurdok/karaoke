@@ -90,7 +90,7 @@ def generate_static_playlist() -> Response | str:
                     "artist": song.artist,
                     "ratings": {
                         user.name: user_ratings[user.id]
-                        .get(song.id, Rating.DONT_KNOW)
+                        .get(song.id, Rating.UNKNOWN)
                         .name
                         for user in users
                     },

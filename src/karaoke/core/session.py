@@ -117,6 +117,7 @@ class KaraokeSession(Base):
 
         session.commit()
         self.snooze_top_songs(10)
+        self.snooze_obscure_songs(know_count_threshold=3)
         session.commit()
 
     def snooze_top_songs(self, n):
@@ -127,6 +128,17 @@ class KaraokeSession(Base):
         )
         for index, song in enumerate(reversed(sorted_candidates[:n])):
             song.snooze_ttl = random.randrange(5, 20 - index)
+
+    def snooze_obscure_songs(self, know_count_threshold):
+        """Snooze songs that only a few people know."""
+
+        for song in self.songs:
+            know_count = 0
+            for rating in song.song.ratings:
+                if rating.rating != Rating.DONT_KNOW:
+                    know_count += 1
+            if know_count < know_count_threshold:
+                song.snooze_ttl = random.randrange(10, 20)
 
     def get_played_songs_count(self):
         return len([song for song in self.songs if song.played])
