@@ -21,7 +21,8 @@ class Song(Base):
     artist: Mapped[str] = mapped_column(String(100))
     video_link: Mapped[str] = mapped_column(String(500))
     ratings: Mapped[list["UserSongRating"]] = relationship(
-        back_populates="song"
+        back_populates="song",
+        cascade="all, delete, delete-orphan",
     )
 
     def __repr__(self) -> str:

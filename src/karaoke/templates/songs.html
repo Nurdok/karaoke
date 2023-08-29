@@ -164,10 +164,6 @@
     }
 
     function confirmDeleteSongOnClick(song_id) {
-        let deleteBtn = document.getElementById("delete-btn-" + song_id);
-        deleteBtn.style.display = "block";
-        let confirmDeleteBtn = document.getElementById("confirm-delete-btn-" + song_id);
-        confirmDeleteBtn.style.display = "none";
         deleteSong(song_id)
             .then(response => {
                 if (response.ok) {

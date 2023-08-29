@@ -510,7 +510,7 @@ def delete_song_api() -> Response:
 
     engine = create_engine(LOCAL_DB)
     with sessionmaker(bind=engine)() as session:
-        session.query(Song).filter_by(id=song_id).delete()
+        session.delete(session.query(Song).filter_by(id=song_id).first())
         session.commit()
 
     return Response(status=200)
