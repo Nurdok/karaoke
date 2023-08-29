@@ -41,6 +41,13 @@
         margin-bottom: 60px;
     }
 
+    .undo-button {
+        padding: 10px 20px;
+        font-size: calc(26px + 1vw);
+        cursor: pointer;
+    }
+
+
     @media (hover: none) {
         .hotkey {
             display: none;
@@ -76,7 +83,7 @@
     <div id="video-area"></div>
     <div id="previous-song-container" style="display: none">
         <p>You rated <b id="previous-song-title"></b> by <b id="previous-song-artist"></b> as "<span id="previous-song-rating"></span>"</p>
-        <button onclick="undoRating()">Undo<span class="hotkey">(<kbd>Ctrl</kbd>+<kbd>z</kbd>)</span></button>
+        <button class="undo-button" onclick="undoRating()">Undo<span class="hotkey">(<kbd>Ctrl</kbd>+<kbd>z</kbd>)</span></button>
     </div>
 </div>
 
