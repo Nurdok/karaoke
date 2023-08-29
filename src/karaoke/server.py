@@ -128,6 +128,7 @@ def list_songs() -> Response | str:
                     "id": song.id,
                     "title": song.title,
                     "artist": song.artist,
+                    "video_link": song.get_video_link(embed_yt_videos=False),
                     "rating": (
                         user_rating.rating.value
                         if user_rating is not None
@@ -463,6 +464,35 @@ def add_song_api() -> Response:
             video_link=video_link,
         )
         session.add(song)
+        session.commit()
+
+    return Response(status=200)
+
+
+@app.route("/api/edit-song", methods=["POST"])
+def edit_song_api() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    song_id: int = int(data.get("song_id", -1))
+    artist: Optional[str] = data.get("artist", None)
+    title: Optional[str] = data.get("title", None)
+    video_link: Optional[str] = data.get("video_link", None)
+
+    print(f"Editing song: {song_id} - {artist} - {title} - {video_link}")
+
+    if None in (artist, title, video_link):
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        song: Optional[Song] = (
+            session.query(Song).filter_by(id=song_id).first()
+        )
+        if song is None:
+            return Response(status=400)
+
+        song.artist = artist
+        song.title = title
+        song.video_link = video_link
         session.commit()
 
     return Response(status=200)

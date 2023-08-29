@@ -122,3 +122,20 @@ function getVideoEmbedInnerHtml(video_link, autoplay = false) {
     let autoplay_int = autoplay ? 1 : 0;
     return `<iframe width="100%" height="100%" src="${video_link}?autoplay=${autoplay}" frameborder="0" allowfullscreen allow="autoplay"></iframe>`;
 }
+
+function editSong(song_id, artist, title, video_link) {
+    const data = {
+        song_id: song_id,
+        artist: artist,
+        title: title,
+        video_link: video_link
+    };
+
+    return fetch('/api/edit-song', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+}

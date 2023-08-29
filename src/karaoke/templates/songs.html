@@ -28,6 +28,14 @@
     #reset-ratings-confirm-btn {
         display: none;
     }
+
+    .edit-form {
+        font-size: 0.5em;
+        display: none;
+        padding-left: 2.5em;
+        padding-top: 1em;
+        padding-bottom: 2em;
+    }
 </style>
 {% endblock %}
 
@@ -37,7 +45,10 @@
 <div class="song-list">
     {% for song in songs %}
     <div class="song-container">
-        <span class="song-details"><b>{{ song.title }}</b> by <b>{{ song.artist }}</b></span>
+        <span class="song-details">
+            <button class="edit-btn" id="edit-btn-{{song.id}}" onclick="openEditForm({{song.id}})">✎</button>
+            <b><span id="song-title-{{song.id}}">{{ song.title }}</span></b> by <b><span id="song-artist-{{song.id}}">{{ song.artist }}</span></b>
+        </span>
         <div class="rating-container">
             <form class="song-rating-form">
                 <input type="hidden" name="song_id" value="{{ song.id }}">
@@ -51,10 +62,29 @@
                   <option class="rating-option" value="4" {% if song.rating == 4 %}selected{% endif %}></option>
                 </select>
 
-                <input class="change-rating" id="save-btn-{{song.id}}" type="button" class="btn btn-success btn-sm" onclick="onSave({{song.id}})" value="💾" />
+                <input class="change-rating" id="save-btn-{{song.id}}" type="button" class="btn" onclick="onSave({{song.id}})" value="💾" />
             </form>
         </div>
     </div>
+    <form id="edit-song-{{song.id}}" class="edit-form">
+        <p>
+            <label for="artist">Artist:</label>
+            <span>
+            <input type="text" id="artist" name="artist"
+                   list="artist-list" value="{{song.artist}}"/>
+        </span>
+        </p>
+        <p>
+            <label for="title">Title:</label>
+            <input type="text" id="title" name="title" value="{{song.title}}"/>
+        </p>
+        <p>
+            <label for="video_link">Video Link:</label>
+            <input type="text" id="video_link" name="video_link"
+                   value="{{song.video_link}}"/>
+        </p>
+        <input type="button" value="Submit" onclick="submitForm({{song.id}})"/>
+    </form>
     {% endfor %}
 </div>
 <span id="reset-ratings-container">
@@ -88,6 +118,33 @@
             })
             .catch(error => {
                 console.error('Error rating song:', error);
+            });
+    }
+
+    function openEditForm(song_id) {
+        let form = document.getElementById("edit-song-" + song_id);
+        form.style.display = "block";
+    }
+
+    function submitForm(song_id) {
+        let form = document.getElementById("edit-song-" + song_id);
+        let artist = form.querySelector("#artist").value;
+        let title = form.querySelector("#title").value;
+        let video_link = form.querySelector("#video_link").value;
+        editSong(song_id, artist, title, video_link)
+            .then(response => {
+                if (response.ok) {
+                    // Edit was successful, so hide the form and update the
+                    // song details
+                    form.style.display = "none";
+                    document.getElementById("song-artist-" + song_id).innerHTML = artist;
+                    document.getElementById("song-title-" + song_id).innerHTML = title;
+                } else {
+                    console.error('Error editing song:', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error editing song:', error);
             });
     }
 

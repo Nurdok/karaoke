@@ -45,7 +45,7 @@ def is_http(url: str) -> bool:
 
 
 def get_video_link(url: str, embed_yt_videos: bool = False) -> str:
-    if is_http(url) and not is_youtube_url(url):
+    if (is_http(url) or "." in url) and not is_youtube_url(url):
         return url
 
     video_id: str = (
