@@ -498,6 +498,24 @@ def edit_song_api() -> Response:
     return Response(status=200)
 
 
+@app.route("/api/delete-song", methods=["POST"])
+def delete_song_api() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    song_id: int = int(data.get("song_id", -1))
+
+    print(f"Deleting song: {song_id}")
+
+    if song_id == -1:
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        session.query(Song).filter_by(id=song_id).delete()
+        session.commit()
+
+    return Response(status=200)
+
+
 @app.route("/start-session")
 def start_session() -> Response | str:
     engine = create_engine(LOCAL_DB)

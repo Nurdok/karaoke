@@ -36,6 +36,10 @@
         padding-top: 1em;
         padding-bottom: 2em;
     }
+
+    .confirm-delete-btn {
+        display: none;
+    }
 </style>
 {% endblock %}
 
@@ -44,7 +48,8 @@
 <p><span id="user-name">{{ user.name }}</span>, these are your song ratings:</p>
 <div class="song-list">
     {% for song in songs %}
-    <div class="song-container">
+    <div id="song-and-form-container-{{song.id}}">
+    <div class="song-container" id="song-container-{{song.id}}">
         <span class="song-details">
             <button class="edit-btn" id="edit-btn-{{song.id}}" onclick="openEditForm({{song.id}})">✎</button>
             <b><span id="song-title-{{song.id}}">{{ song.title }}</span></b> by <b><span id="song-artist-{{song.id}}">{{ song.artist }}</span></b>
@@ -84,7 +89,10 @@
                    value="{{song.video_link}}"/>
         </p>
         <input type="button" value="Submit" onclick="submitForm({{song.id}})"/>
+        <input type="button" id="delete-btn-{{song.id}}" value="Delete" onclick="deleteSongOnClick({{song.id}})"/>
+        <input type="button" class="confirm-delete-btn" id="confirm-delete-btn-{{song.id}}" value="Really?" onclick="confirmDeleteSongOnClick({{song.id}})"/>
     </form>
+    </div>
     {% endfor %}
 </div>
 <span id="reset-ratings-container">
@@ -147,6 +155,34 @@
                 console.error('Error editing song:', error);
             });
     }
+
+    function deleteSongOnClick(song_id) {
+        let deleteBtn = document.getElementById("delete-btn-" + song_id);
+        deleteBtn.style.display = "none";
+        let confirmDeleteBtn = document.getElementById("confirm-delete-btn-" + song_id);
+        confirmDeleteBtn.style.display = "inline-block";
+    }
+
+    function confirmDeleteSongOnClick(song_id) {
+        let deleteBtn = document.getElementById("delete-btn-" + song_id);
+        deleteBtn.style.display = "block";
+        let confirmDeleteBtn = document.getElementById("confirm-delete-btn-" + song_id);
+        confirmDeleteBtn.style.display = "none";
+        deleteSong(song_id)
+            .then(response => {
+                if (response.ok) {
+                    // Hide the entire song row
+                    let songContainer = document.getElementById("song-and-form-container-" + song_id);
+                    songContainer.style.display = "none";
+                } else {
+                    console.error('Error deleting song:', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting song:', error);
+            });
+    }
+
 
     let rating_option_values = document.getElementsByClassName('rating-option');
     for (let i = 0; i < rating_option_values.length; i++) {

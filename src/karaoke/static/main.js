@@ -139,3 +139,17 @@ function editSong(song_id, artist, title, video_link) {
         body: JSON.stringify(data)
     })
 }
+
+function deleteSong(song_id) {
+    const data = {
+        song_id: song_id,
+    };
+
+    return fetch('/api/delete-song', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    });
+}
