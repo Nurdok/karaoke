@@ -117,7 +117,7 @@ class KaraokeSession(Base):
 
         session.commit()
         self.snooze_top_songs(10)
-        self.snooze_obscure_songs(know_count_threshold=3)
+        self.snooze_obscure_songs(know_count_threshold=len(user_ids) // 2)
         session.commit()
 
     def snooze_top_songs(self, n):
