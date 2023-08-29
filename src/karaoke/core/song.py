@@ -49,9 +49,12 @@ def get_video_link(url: str, embed_yt_videos: bool = False) -> str:
     if (is_http(url) or "." in url) and not is_youtube_url(url):
         return url
 
-    video_id: str = (
-        pytube.extract.video_id(url) if is_youtube_url(url) else url
-    )
+    try:
+        video_id: str = (
+            pytube.extract.video_id(url) if is_youtube_url(url) else url
+        )
+    except Exception:
+        return url
 
     yt: pytube.YouTube = pytube.YouTube.from_id(video_id)
     return yt.embed_url if embed_yt_videos else yt.watch_url
