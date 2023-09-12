@@ -55,7 +55,7 @@
         flex-direction: row;
         justify-content: space-between;
         align-items: flex-start;
-        width: 40%;
+        width: 50%;
     }
 
     #rating {
@@ -139,9 +139,15 @@
         }
     }
 
+    function getScoreIncludingCurrentRating(score) {
+        let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
+        return score.score + toScore(rating.rating);
+    }
+
     function updateCurrentScores(scores) {
         const leaderboardTable = document.getElementById('leaderboard-table');
         leaderboardTable.innerHTML = '';
+        scores.sort((a, b) => getScoreIncludingCurrentRating(b) - getScoreIncludingCurrentRating(a));
         for (let i = 0; i < scores.length; i++) {
             let score = scores[i];
             let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
