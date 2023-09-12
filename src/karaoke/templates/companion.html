@@ -28,10 +28,6 @@
         align-items: center;
     }
 
-    .rating {
-        font-size: 0.7em;
-    }
-
     .btn {
         width: 100%;
         padding: 10px 20px;
@@ -51,6 +47,7 @@
         justify-content: center;
         align-items: center;
         width: 100%;
+        row-gap: 10px;
     }
 
     .user-score {
@@ -61,24 +58,51 @@
         width: 40%;
     }
 
+    #rating {
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    }
+
+    .gold-star {
+        color: gold;
+    }
+
+    .empty-star {
+        color: white;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 0 25px;
+      height: 50px;
+      line-height: 50px;
+      border-radius: 25px;
+      background-color: #f1f1f1;
+    }
+
+    .chip img {
+      float: left;
+      margin: 0 10px 0 -25px;
+      height: 50px;
+      width: 50px;
+      border-radius: 50%;
+    }
+
+
 </style>
 {% endblock %}
 
 {% block content %}
 <span class="song-container" id="song-details"></span>
 
-<span id="step-out-container">
-    <button id="stepping-out" class="btn">I'm stepping out</button>
-    <button id="stepping-back" class="btn">I'm back!</button>
-</span>
-
 <div id="leaderboard-container">
-    <h3>Current scores</h3>
     <div id="leaderboard-table">
     </div>
 </div>
 
-<div id="rating-container"></div>
+<span id="step-out-container">
+    <button id="stepping-out" class="btn">I'm stepping out</button>
+    <button id="stepping-back" class="btn">I'm back!</button>
+</span>
 
 
 <script>
@@ -110,16 +134,6 @@
                 <h1 id="song-title">${currentSong.title}</h1>
                 <h3 id="song-artist">${currentSong.artist}</h3>
             `;
-            ratingsContainer.innerHTML = '';
-
-            for (let i = 0; i < currentSong.ratings.length; i++) {
-                let rating = currentSong.ratings[i];
-                ratingsContainer.innerHTML += `
-                    <span class="rating">
-                        ${rating.user_name} rated this song "${toRatingDisplayString(rating.rating)}"
-                    </span>
-                `;
-            }
         } else {
             songDetails.innerHTML = currentSong.title;
         }
@@ -130,10 +144,12 @@
         leaderboardTable.innerHTML = '';
         for (let i = 0; i < scores.length; i++) {
             let score = scores[i];
+            let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
+            let score_int = score.score + toScore(rating.rating);
             leaderboardTable.innerHTML += `
                 <span class="user-score">
-                    <span>${score.user_name}</span>
-                    <span>${score.score}</span>
+                    <span class="chip">${score.user_name} (${score_int})</span>
+                    <span id="rating">${toStars(rating.rating)}</span>
                 </span>
             `;
         }

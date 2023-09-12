@@ -75,6 +75,36 @@ function toRatingDisplayString(rating_int) {
     }
 }
 
+function toScore(rating_int) {
+    switch (rating_int) {
+        case 0:
+            return 0;
+        case 1:
+            return -1;
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 5;
+    }
+}
+
+function toStars(rating_int) {
+    switch (rating_int) {
+        case 0:
+            return '<span class="empty-star">★★★★★</span>'
+        case 1:
+            return '<span class="empty-star">★★★★★</span>'
+        case 2:
+            return '<span class="gold-star">★</span><span class="empty-star">★★★★</span>';
+        case 3:
+            return '<span class="gold-star">★★</span><span class="empty-star">★★★</span>';
+        case 4:
+            return '<span class="gold-star">★★★★★</span>'
+    }
+}
+
 function parseJsonSong(song) {
     if (song.status === 'OK') {
         return {
