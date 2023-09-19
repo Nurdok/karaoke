@@ -16,6 +16,9 @@ redis = "*"
 sqlalchemy = "*"
 pytube = "*"
 
+[tool.poetry.group.runtime.dependencies]
+waitress = "*"
+
 [tool.poetry.group.test.dependencies]
 pytest = "*"
 
