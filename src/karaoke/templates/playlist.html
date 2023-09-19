@@ -33,7 +33,7 @@
         <span class="song-details"><b>{{ song.title }}</b> by <b>{{ song.artist }}</b></span>
         <div class="rating-container">
             {% for user_name, user_rating in song.ratings.items() %}
-            <span class="song-rating">{{ user_name }}: {{ user_rating }}</span>
+            <span class="song-rating">{{ user_name }}: <span class="user-rating">{{ user_rating }}</span></span>
             {% endfor %}
         </div>
     </div>
@@ -41,5 +41,17 @@
 </div>
 
 <script>
+    function turnAllRatingsToStars() {
+        let ratings = document.getElementsByClassName("user-rating");
+        for (let i = 0; i < ratings.length; i++) {
+            let rating = ratings[i];
+            // parse innerHTML to int
+            let rating_int = parseInt(rating.innerText);
+            rating.innerHTML = toStars(rating_int);
+        }
+    }
+
+    turnAllRatingsToStars();
+
 </script>
 {% endblock %}

@@ -56,3 +56,17 @@ body {
     color: black;
     font-size: calc(20px + 1vw);
 }
+
+.star-rating {
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+
+.gold-star {
+    color: gold;
+}
+
+.empty-star {
+    color: white;
+}
+
+

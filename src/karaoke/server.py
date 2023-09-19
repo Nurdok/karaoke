@@ -91,7 +91,7 @@ def generate_static_playlist() -> Response | str:
                     "ratings": {
                         user.name: user_ratings[user.id]
                         .get(song.id, Rating.UNKNOWN)
-                        .name
+                        .value
                         for user in users
                     },
                 }

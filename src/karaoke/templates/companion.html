@@ -58,18 +58,6 @@
         width: 50%;
     }
 
-    #rating {
-        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-    }
-
-    .gold-star {
-        color: gold;
-    }
-
-    .empty-star {
-        color: white;
-    }
-
     .chip {
       display: inline-block;
       padding: 0 25px;
@@ -155,7 +143,7 @@
             leaderboardTable.innerHTML += `
                 <span class="user-score">
                     <span class="chip">${score.user_name} (${score_int})</span>
-                    <span id="rating">${toStars(rating.rating)}</span>
+                    ${toStars(rating.rating)}
                 </span>
             `;
         }

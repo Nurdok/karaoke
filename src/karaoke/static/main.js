@@ -91,18 +91,25 @@ function toScore(rating_int) {
 }
 
 function toStars(rating_int) {
+    let inner = "";
     switch (rating_int) {
         case 0:
-            return '<span class="empty-star">★★★</span>'
+            inner = '<span class="empty-star">★★★</span>'
+            break;
         case 1:
-            return '<span class="empty-star">★★★</span>'
+            inner = '<span class="empty-star">★★★</span>'
+            break;
         case 2:
-            return '<span class="gold-star">★</span><span class="empty-star">★★</span>';
+            inner = '<span class="gold-star">★</span><span class="empty-star">★★</span>';
+            break;
         case 3:
-            return '<span class="gold-star">★★</span><span class="empty-star">★</span>';
+            inner = '<span class="gold-star">★★</span><span class="empty-star">★</span>';
+            break;
         case 4:
-            return '<span class="gold-star">★★★</span>'
+            inner = '<span class="gold-star">★★★</span>'
+            break;
     }
+    return '<span class="star-rating">' + inner + '</span>';
 }
 
 function parseJsonSong(song) {
