@@ -247,17 +247,15 @@ def mark_as_played_and_get_next() -> str:
 
 
 @app.route("/next")
-def mark_as_played_and_redirect_to_next() -> "BaseResponse":
+def mark_as_played_and_redirect_to_next() -> str | Response:
     def mark_song(
         karaoke_session: KaraokeSession, *, session: Session
     ) -> None:
         karaoke_session.mark_current_song_as_played(session=session)
 
-    return redirect(
-        json.loads(next_video(mark_song, embed_yt_videos=False)).get(
-            "video_link"
-        )
-    )
+    next_video(mark_song, embed_yt_videos=False)
+    session_id: str = request.args.get("s", "")
+    return render_template("splash.html", session_id=session_id)
 
 
 @app.route("/api/snooze-and-get-next")

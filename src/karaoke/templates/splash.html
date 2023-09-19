@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Loading next song...{% endblock %}
+
+{% block head %}
+<style>
+    body {
+        text-align: center;
+    }
+
+    .content {
+        max-width: 100%;
+        padding: 30px;
+    }
+
+    .song-container {
+    }
+
+    .song-container h1 {
+        margin-bottom: 0;
+        word-break: break-word;
+    }
+
+    .song-container h3 {
+        margin-top: 0;
+        margin-bottom: 2.5em;
+    }
+
+    #rating-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: left;
+        align-items: center;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px 20px;
+        font-size: calc(26px + 1vw);
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+    #leaderboard-container {
+        margin-bottom: 2em;
+        margin-top: 2em;
+        width: 100%;
+    }
+
+    #leaderboard-table {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        row-gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .user-score {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 50%;
+    }
+
+    .chip {
+        display: inline-block;
+        padding: 0 25px;
+        height: 50px;
+        line-height: 50px;
+        border-radius: 25px;
+        background-color: #f1f1f1;
+    }
+
+    .chip img {
+        float: left;
+        margin: 0 10px 0 -25px;
+        height: 50px;
+        width: 50px;
+        border-radius: 50%;
+    }
+
+    #counter {
+        #font-size: 4em;
+    }
+
+    #half-divider {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    #left {
+        flex: 1;
+    }
+
+    #right {
+        flex: 1;
+    }
+
+    #counter {
+        font-size: 4em;
+    }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="half-divider">
+    <div id="left">
+        <span class="song-container" id="song-details"></span>
+
+        <div id="countdown">
+            <h2>Starting in <div id="counter"></div></h2>
+        </div>
+    </div>
+    <div id="right">
+        <div id="leaderboard-container">
+            <div id="leaderboard-table">
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let currentSong = {};
+    let session_id = "{{ session_id }}";
+
+    function updateCurrentlyPlaying() {
+        fetch(`/api/get-current-song?s=${session_id}`)
+                .then(response => response.json())
+                .then(song_json => {
+                    currentSong = parseJsonSong(song_json);
+                    updateCurrentSongDetails();
+
+                    getCurrentScores(session_id)
+                            .then(scores => {
+                                updateCurrentScores(scores);
+                            });
+                })
+                .catch(error => {
+                    console.log('Error loading song:', error);
+                });
+    }
+
+    function updateCurrentSongDetails() {
+        const songDetails = document.getElementById('song-details');
+        const ratingsContainer = document.getElementById('rating-container');
+        if (currentSong.id !== -1) {
+            songDetails.innerHTML = `
+                <h1 id="song-title">${currentSong.title}</h1>
+                <h3 id="song-artist">${currentSong.artist}</h3>
+            `;
+        } else {
+            songDetails.innerHTML = currentSong.title;
+        }
+    }
+
+    function getScoreForRating(score) {
+        let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
+        if (rating === undefined) {
+            return 0;
+        }
+        return toScore(rating.rating);
+    }
+
+    function updateCurrentScores(scores) {
+        const leaderboardTable = document.getElementById('leaderboard-table');
+        leaderboardTable.innerHTML = '';
+        scores.sort((a, b) => getScoreForRating(b) - getScoreForRating(a));
+        for (let i = 0; i < scores.length; i++) {
+            let score = scores[i];
+            let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
+            if (rating === undefined) {
+                rating = {rating: 0};
+            }
+            let score_int = score.score + toScore(rating.rating);
+            leaderboardTable.innerHTML += `
+                <span class="user-score">
+                    <span class="chip">${score.user_name} (${score_int})</span>
+                    ${toStars(rating.rating)}
+                </span>
+            `;
+        }
+    }
+
+    function redirectToVideoLink() {
+        if (currentSong.id !== -1) {
+            console.log('Redirecting to video link:', currentSong.video_link);
+            window.location.href = currentSong.video_link;
+        }
+    }
+
+    let countdown = 10;
+    function updateCountdown() {
+        const counter = document.getElementById('counter');
+        counter.innerHTML = countdown;
+        countdown--;
+        if (countdown <= 0) {
+            redirectToVideoLink();
+        }
+        setTimeout(updateCountdown, 1000);
+    }
+
+    updateCurrentlyPlaying();
+    updateCountdown();
+
+</script>
+{% endblock %}
