@@ -170,17 +170,25 @@
         return toScore(rating.rating);
     }
 
+    function sortScores(a, b) {
+        let ratingDiff = getScoreForRating(b) - getScoreForRating(a);
+        if (ratingDiff !== 0) {
+            return ratingDiff;
+        }
+        return a.score - b.score;
+    }
+
     function updateCurrentScores(scores) {
         const leaderboardTable = document.getElementById('leaderboard-table');
         leaderboardTable.innerHTML = '';
-        scores.sort((a, b) => getScoreForRating(b) - getScoreForRating(a));
+        scores.sort(sortScores);
         for (let i = 0; i < scores.length; i++) {
             let score = scores[i];
             let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
             if (rating === undefined) {
                 rating = {rating: 0};
             }
-            let score_int = score.score + toScore(rating.rating);
+            let score_int = score.score;
             leaderboardTable.innerHTML += `
                 <span class="user-score">
                     <span class="chip">${score.user_name} (${score_int})</span>
