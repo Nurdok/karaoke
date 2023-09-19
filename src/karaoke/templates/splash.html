@@ -167,7 +167,8 @@
     }
 
     function getScoreForRating(score) {
-        let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
+        let rating = currentSong.ratings.find(
+            rating => rating.user_id === score.user_id);
         if (rating === undefined) {
             return 0;
         }
