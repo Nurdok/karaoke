@@ -542,6 +542,10 @@ def reset_ratings() -> Response | str:
     return redirect("/rate")
 
 
+def get_app() -> Flask:
+    return app
+
+
 def start_server() -> None:
     app.run(host="0.0.0.0", port=5000, debug=True)
 
