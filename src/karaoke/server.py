@@ -289,7 +289,10 @@ def skip_and_get_next() -> str:
     ) -> None:
         karaoke_session.skip_current_song(session=session)
 
-    return next_video(mark_song, embed_yt_videos=True)
+    embed: bool = request.args.get("embed", True)
+    if embed in (0, "0", "false", "False"):
+        embed = False
+    return next_video(mark_song, embed_yt_videos=embed)
 
 
 @app.route("/skip")

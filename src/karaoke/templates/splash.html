@@ -106,6 +106,25 @@
         font-size: 4em;
     }
 
+    .actionBtn {
+        height: 3em;
+        width: 3em;
+        border: none;
+        cursor: pointer;
+    }
+
+    #pause {
+        background: url("/static/circle-pause-regular.svg") no-repeat center;
+    }
+
+    #skip {
+        background: url("/static/circle-xmark-regular.svg") no-repeat center;
+    }
+
+    #snooze {
+        background: url("/static/circle-right-regular.svg") no-repeat center;
+    }
+
 
 </style>
 {% endblock %}
@@ -116,9 +135,13 @@
         <span class="song-container" id="song-details"></span>
 
         <div id="countdown">
-            <h2>Starting in <div id="counter"></div></h2>
+            <h2>Starting in <div id="counter"></div>
+                <button class="actionBtn" id="pause"></button>
+                <button class="actionBtn" id="skip"></button>
+                <button class="actionBtn" id="snooze"></button>
+            </h2>
         </div>
-
+</h2>
         <h1><a href="/" class="logo">🎤♫ Fair Karaoke ♫🎤</a></h1>
     </div>
     <div id="right">
@@ -208,17 +231,62 @@
         }
     }
 
+    let pauseBtn = document.getElementById('pause');
+    let isPaused = false;
+    function pause() {
+        if (isPaused) {
+            isPaused = false;
+            pauseBtn.style.background = 'url("/static/circle-pause-regular.svg") no-repeat center';
+        }
+        else {
+            isPaused = true;
+            pauseBtn.style.background = 'url("/static/circle-play-regular.svg") no-repeat center';
+        }
+    }
+    pauseBtn.onclick = pause;
+
     let countdown = 10;
     function updateCountdown() {
-        const counter = document.getElementById('counter');
-        counter.innerHTML = countdown;
-        countdown--;
-        if (countdown <= 0) {
-            redirectToVideoLink();
-            return;
+        if (!isPaused) {
+            const counter = document.getElementById('counter');
+            counter.innerHTML = countdown;
+            countdown--;
+            if (countdown <= 0) {
+                redirectToVideoLink();
+                return;
+            }
         }
         setTimeout(updateCountdown, 1000);
     }
+
+    function getNextVideo(apiAction) {
+        fetch(`/api/${apiAction}?s=${session_id}&embed=0`)
+                .then(response => response.json())
+                .then(song_json => {
+                    currentSong = parseJsonSong(song_json);
+                    updateCurrentSongDetails();
+                })
+                .catch(error => {
+                    console.log('Error loading song:', error);
+                });
+
+    }
+
+    function skip() {
+        getNextVideo('skip-and-get-next');
+        countdown = 10;
+        isPaused = true;
+        pause();
+    }
+    document.getElementById("skip").onclick = skip;
+
+    function snooze() {
+        getNextVideo('snooze-and-get-next');
+        countdown = 10;
+        isPaused = true;
+        pause();
+    }
+    document.getElementById("snooze").onclick = skip;
 
     updateCurrentlyPlaying();
     updateCountdown();
