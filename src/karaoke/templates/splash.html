@@ -215,9 +215,13 @@
                 rating = {rating: 0};
             }
             let score_int = score.score;
+            let name = score.user_name;
+            if (score.user_stepped_out) {
+                name = `<s>${name}</s>`
+            }
             leaderboardTable.innerHTML += `
                 <span class="user-score">
-                    <span class="chip">${score.user_name} (${score_int})</span>
+                    <span class="chip">${name} (${score_int})</span>
                     ${toStars(rating.rating)}
                 </span>
             `;

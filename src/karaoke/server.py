@@ -228,6 +228,7 @@ def get_current_scores() -> str:
                 {
                     "user_id": user.user_id,
                     "user_name": user.user.name,
+                    "user_stepped_out": user.stepped_out,
                     "score": user.score,
                 }
             )
