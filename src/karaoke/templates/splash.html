@@ -265,6 +265,10 @@
                 .then(song_json => {
                     currentSong = parseJsonSong(song_json);
                     updateCurrentSongDetails();
+                    updateCurrentlyPlaying();
+                    countdown = 10;
+                    isPaused = true;
+                    pause();
                 })
                 .catch(error => {
                     console.log('Error loading song:', error);
@@ -274,17 +278,11 @@
 
     function skip() {
         getNextVideo('skip-and-get-next');
-        countdown = 10;
-        isPaused = true;
-        pause();
     }
     document.getElementById("skip").onclick = skip;
 
     function snooze() {
         getNextVideo('snooze-and-get-next');
-        countdown = 10;
-        isPaused = true;
-        pause();
     }
     document.getElementById("snooze").onclick = skip;
 
