@@ -51,6 +51,15 @@
         width: 100%;
     }
 
+    #companion-qr-code {
+        margin-bottom: 2em;
+        margin-top: 2em;
+        width: 100%;
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
     #leaderboard-table {
         display: flex;
         flex-direction: column;
@@ -125,6 +134,10 @@
         background: url("/static/circle-right-regular.svg") no-repeat center;
     }
 
+    #showQr {
+        background: url("/static/qrcode-solid.svg") no-repeat center;
+    }
+
 
 </style>
 {% endblock %}
@@ -149,13 +162,37 @@
             <div id="leaderboard-table">
             </div>
         </div>
+        <div id="companion-qr-code">
+        </div>
+        <div>
+            <button class="actionBtn" id="showQr"></button>
+        </div>
     </div>
 </div>
 
+<script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
 
 <script>
     let currentSong = {};
     let session_id = "{{ session_id }}";
+
+
+    let companion_link = "http://" + location.hostname + "/companion?s=" + session_id;
+    new QRCode(document.getElementById("companion-qr-code"), companion_link);
+
+    function toggleQrCode() {
+        let leaderboard = document.getElementById("leaderboard-container");
+        let qrCode = document.getElementById("companion-qr-code");
+        if (qrCode.style.display === "none" || qrCode.style.display === "") {
+            qrCode.style.display = "flex";
+            leaderboard.style.display = "none";
+        } else {
+            qrCode.style.display = "none";
+            leaderboard.style.display = "block";
+        }
+    }
+
+    document.getElementById("showQr").onclick = toggleQrCode;
 
     function updateCurrentlyPlaying() {
         fetch(`/api/get-current-song?s=${session_id}`)
