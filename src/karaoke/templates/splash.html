@@ -215,6 +215,7 @@
         countdown--;
         if (countdown <= 0) {
             redirectToVideoLink();
+            return;
         }
         setTimeout(updateCountdown, 1000);
     }
