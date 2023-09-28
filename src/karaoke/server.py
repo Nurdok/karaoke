@@ -18,6 +18,10 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 LOCAL_DB = "sqlite:///karaoke.sqlite"
 
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.WARN,
+)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -325,7 +329,9 @@ def next_video(mark_song: Callable, embed_yt_videos: bool) -> str:
             return ""
 
         mark_song(karaoke_session, session=session)
+        session.commit()
         song: Optional[Song] = karaoke_session.get_next_song(session=session)
+        session.commit()
         if song is None:
             return no_more_songs()
 

@@ -21,16 +21,6 @@ logger = logging.getLogger(__name__)
 # Number of songs to hold off when snoozing a song.
 SNOOZE_TTL = 5
 
-from time import perf_counter
-from time import sleep
-from contextlib import contextmanager
-
-@contextmanager
-def catchtime() -> float:
-    t1 = t2 = perf_counter()
-    yield lambda: t2 - t1
-    t2 = perf_counter()
-
 class KaraokeSessionUser(Base):
     __tablename__ = "karaoke_session_user"
 
@@ -241,15 +231,15 @@ class KaraokeSession(Base):
             if song.snooze_ttl > 0:
                 song.snooze_ttl -= 1
 
-        session.commit()
-
     def get_current_song(
         self, *, session: Session
     ) -> Optional[KaraokeSessionSong]:
         for song in self.songs:
             if song.current_song:
+                logger.info(f"Found current song: {song.song.title}")
                 return song
 
+        logger.info(f"No current song found.")
         return None
 
     def skip_current_song(self, session: Session) -> None:
@@ -257,14 +247,12 @@ class KaraokeSession(Base):
             return
         current_song.played = True
         current_song.current_song = False
-        session.commit()
 
     def snooze_current_song(self, *, session: Session) -> None:
         if (current_song := self.get_current_song(session=session)) is None:
             return
         current_song.current_song = False
         current_song.snooze_ttl = SNOOZE_TTL
-        session.commit()
 
     def get_next_song(self, *, session: Session) -> Optional[Song]:
         if self.get_current_song(session=session) is not None:
@@ -325,5 +313,4 @@ class KaraokeSession(Base):
         logger.info(f"Picked {picked.song.title}.")
         logger.info(f"Combined score: {self.get_combined_score(picked)}")
         picked.current_song = True
-        session.commit()
         return picked.song
