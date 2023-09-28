@@ -21,6 +21,15 @@ logger = logging.getLogger(__name__)
 # Number of songs to hold off when snoozing a song.
 SNOOZE_TTL = 5
 
+from time import perf_counter
+from time import sleep
+from contextlib import contextmanager
+
+@contextmanager
+def catchtime() -> float:
+    t1 = t2 = perf_counter()
+    yield lambda: t2 - t1
+    t2 = perf_counter()
 
 class KaraokeSessionUser(Base):
     __tablename__ = "karaoke_session_user"
