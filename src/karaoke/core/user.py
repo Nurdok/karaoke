@@ -15,7 +15,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30))
     ratings: Mapped[list["UserSongRating"]] = relationship(
-        back_populates="user"
+        back_populates="user",
     )
 
     def __repr__(self) -> str:
