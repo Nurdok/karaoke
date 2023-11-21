@@ -77,13 +77,14 @@ class KaraokeSession(Base):
             display_id = generate_id()
         self.display_id = display_id
 
-    def add_user_to_session(self, user: User, session: Session) -> None:
+    def add_user_to_session(self, user_id: int, session: Session) -> None:
         session_user = KaraokeSessionUser(
             karaoke_session_id=self.id,
-            user_id=user.id,
+            user_id=user_id,
         )
         session.add(session_user)
         session.commit()
+        self.generate_song_queue(session=session)
 
     def generate_song_queue(self, session: Session) -> None:
         user_ids = [user.user_id for user in self.users]
@@ -120,6 +121,7 @@ class KaraokeSession(Base):
         # we need to be careful not to re-add songs that are already in the queue.
         existing_song_ids = [song.song_id for song in self.songs]
 
+        added_count = 0
         for song_id in song_ids:
             if song_id in existing_song_ids:
                 continue
@@ -128,6 +130,9 @@ class KaraokeSession(Base):
             )
             self.songs.append(kss)
             session.add(kss)
+            added_count += 1
+
+        logger.warn(f"Added {added_count} songs to the queue.")
 
         session.commit()
 

@@ -407,6 +407,30 @@ def step_back() -> Response:
     return set_step_out(data, False)
 
 
+@app.route("/api/join-session", methods=["POST"])
+def join_session() -> Response:
+    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    user_id: int = int(data.get("userId", -1))
+    session_display_id: str = data.get("sessionId", "")
+    if user_id == -1 or session_display_id == "":
+        logger.info(f"Invalid join session request: {data}")
+        return Response(status=400)
+
+    engine = create_engine(LOCAL_DB)
+    with sessionmaker(bind=engine)() as session:
+        karaoke_session = (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_display_id)
+            .first()
+        )
+        if karaoke_session is None:
+            logger.info(f"Invalid join session request: {data}")
+            return Response(status=400)
+
+        karaoke_session.add_user_to_session(user_id=user_id, session=session)
+    return Response(status=200)
+
+
 @app.route("/api/rate-song", methods=["POST"])
 def rate_song() -> Response:
     data: dict[str, str] = json.loads(request.data.decode("utf-8"))

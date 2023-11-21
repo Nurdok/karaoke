@@ -28,7 +28,7 @@ function getUserOrRedirectToLoginPage () {
         window.location.href = "/users";
     }
     let username = getCookie(USER_NAME_COOKIE_NAME);
-    return {id: userId, name: username};
+    return {id: parseInt(userId), name: username};
 }
 
 // Function to set a cookie with a specified name, value, and expiration date

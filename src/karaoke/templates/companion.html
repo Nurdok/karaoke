@@ -75,12 +75,20 @@
       border-radius: 50%;
     }
 
+    #join-session-container {
+        display: none;
+    }
+
 
 </style>
 {% endblock %}
 
 {% block content %}
 <span class="song-container" id="song-details"></span>
+
+<span id="join-session-container">
+    <button id="join-session" class="btn">Join Session!</button>
+</span>
 
 <div id="leaderboard-container">
     <div id="leaderboard-table">
@@ -94,6 +102,9 @@
 
 
 <script>
+    let user = getUserOrRedirectToLoginPage();
+    console.log(`user.id = ${user.id}, user.name = ${user.name}`);
+
     let currentSong = {};
     let session_id = "{{ session_id }}";
 
@@ -136,8 +147,14 @@
         const leaderboardTable = document.getElementById('leaderboard-table');
         leaderboardTable.innerHTML = '';
         scores.sort((a, b) => getScoreIncludingCurrentRating(b) - getScoreIncludingCurrentRating(a));
+        let current_user_is_in_session = false;
         for (let i = 0; i < scores.length; i++) {
             let score = scores[i];
+            console.log(`score.user_id = ${score.user_id}, user.id = ${user.id}`)
+            if (score.user_id === user.id) {
+                console.log("current user is in session");
+                current_user_is_in_session = true;
+            }
             let rating = currentSong.ratings.find(rating => rating.user_id === score.user_id);
             let score_int = score.score + toScore(rating.rating);
             leaderboardTable.innerHTML += `
@@ -147,6 +164,8 @@
                 </span>
             `;
         }
+        console.log("current user is in session? " + current_user_is_in_session);
+        document.getElementById("join-session-container").style.display = current_user_is_in_session ? "none" : "block";
     }
 
     let stepOutBtn = document.getElementById('stepping-out');
@@ -197,6 +216,28 @@
     }
     stepBackBtn.addEventListener('click', stepBack);
     stepBackBtn.style.display = 'none';
+
+    let joinSessionBtn = document.getElementById('join-session');
+    function joinSession() {
+        const data = {
+            "sessionId": "{{ session_id }}",
+            "userId": getUserOrRedirectToLoginPage().id,
+        }
+        fetch('/api/join-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+                .then(response => {
+                    if (response.ok) {
+                        updateCurrentlyPlaying();
+                    }
+                });
+    }
+    joinSessionBtn.addEventListener('click', joinSession);
+
 
     updateCurrentlyPlaying();
     setInterval(updateCurrentlyPlaying, 1000);

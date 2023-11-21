@@ -103,7 +103,7 @@
                     document.getElementById("skip-link").href = "/skip?s=" + response_data.session_id;
                     document.getElementById("snooze-link").href = "/snooze?s=" + response_data.session_id;
 
-                    let companion_link = "http://" + location.hostname + "/companion?s=" + response_data.session_id;
+                    let companion_link = "http://" + location.host + "/companion?s=" + response_data.session_id;
                     new QRCode(document.getElementById("companion-qr-code"), companion_link);
                     document.getElementById("companion-link").href = companion_link;
                 });
