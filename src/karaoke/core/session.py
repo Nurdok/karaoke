@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Number of songs to hold off when snoozing a song.
 SNOOZE_TTL = 5
 
+
 class KaraokeSessionUser(Base):
     __tablename__ = "karaoke_session_user"
 
@@ -76,6 +77,14 @@ class KaraokeSession(Base):
             display_id = generate_id()
         self.display_id = display_id
 
+    def add_user_to_session(self, user: User, session: Session) -> None:
+        session_user = KaraokeSessionUser(
+            karaoke_session_id=self.id,
+            user_id=user.id,
+        )
+        session.add(session_user)
+        session.commit()
+
     def generate_song_queue(self, session: Session) -> None:
         user_ids = [user.user_id for user in self.users]
 
@@ -107,7 +116,13 @@ class KaraokeSession(Base):
         logger.info(f"{session.query(songs_ids_query).all()=}")
         song_ids = (row[0] for row in session.query(songs_ids_query).all())
 
+        # In case we're regenerating the song queue because a new user joined,
+        # we need to be careful not to re-add songs that are already in the queue.
+        existing_song_ids = [song.song_id for song in self.songs]
+
         for song_id in song_ids:
+            if song_id in existing_song_ids:
+                continue
             kss = KaraokeSessionSong(
                 karaoke_session_id=self.id, song_id=song_id, played=False
             )
@@ -115,9 +130,12 @@ class KaraokeSession(Base):
             session.add(kss)
 
         session.commit()
-        self.snooze_top_songs(10)
-        self.snooze_obscure_songs(know_count_threshold=len(user_ids) // 2)
-        session.commit()
+
+        # Snooze some songs for a better experience, but only if the session hasn't started yet.
+        if self.get_played_songs_count() == 0:
+            self.snooze_top_songs(10)
+            self.snooze_obscure_songs(know_count_threshold=len(user_ids) // 2)
+            session.commit()
 
     def snooze_top_songs(self, n):
         """Snooze the top `n` songs for a more balanced session."""
@@ -218,7 +236,8 @@ class KaraokeSession(Base):
 
         # Update user scores.
         song_ratings: dict[int, Rating] = {
-            rating.user_id: rating.rating for rating in current_song.song.ratings
+            rating.user_id: rating.rating
+            for rating in current_song.song.ratings
         }
 
         for user in self.users:
