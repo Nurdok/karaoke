@@ -4,7 +4,7 @@
     <option name="cmdArguments" value="--line-length 79 --target-version py311" />
     <option name="enabledOnReformat" value="true" />
     <option name="enabledOnSave" value="true" />
-    <option name="sdkUUID" value="2d14f0f7-9e6c-48e1-9221-922e6da361c4" />
+    <option name="sdkName" value="Poetry (karaoke)" />
   </component>
   <component name="PreferredVcsStorage">
     <preferredVcsName>ApexVCS</preferredVcsName>

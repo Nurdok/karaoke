@@ -152,17 +152,31 @@
         font-size: 4em;
     }
 
-    .actionBtn {
+    .iconBtn, .textBtn {
+        height: 3em;
+        margin: 0.5em;
+    }
+
+    .iconBtn {
         height: 3em;
         width: 3em;
         border: none;
-        cursor: pointer;
     }
 
+    .textBtn {
+        font-weight: bold;
+        background: white;
+        border: 3px solid;
+        border-radius: 1em;
+        font-size: 0.4em;
+        cursor: pointer;
+        width: 7em;
+    }
     #pause {
         background: url("/static/circle-pause-regular.svg") no-repeat center;
     }
 
+    /*
     #skip {
         background: url("/static/circle-xmark-regular.svg") no-repeat center;
     }
@@ -170,9 +184,17 @@
     #snooze {
         background: url("/static/circle-right-regular.svg") no-repeat center;
     }
+    */
 
     #showQr {
         background: url("/static/qrcode-solid.svg") no-repeat center;
+    }
+
+    #songButtons {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
     }
 
 
@@ -186,9 +208,13 @@
 
         <div id="countdown">
             <h2>Starting in <div id="counter"></div>
-                <button class="actionBtn" id="pause"></button>
-                <button class="actionBtn" id="skip"></button>
-                <button class="actionBtn" id="snooze"></button>
+                <div id="pauseBtnRow">
+                    <button class="iconBtn" id="pause"></button>
+                </div>
+                <div id="songButtons">
+                    <button class="textBtn" id="skip">Not today</button>
+                    <button class="textBtn" id="snooze">Maybe later</button>
+                </div>
             </h2>
         </div>
 </h2>
@@ -204,7 +230,7 @@
             </div>
         </div>
         <div>
-            <button class="actionBtn" id="showQr"></button>
+            <button class="iconBtn" id="showQr"></button>
         </div>
     </div>
 </div>
@@ -323,7 +349,8 @@
     }
     pauseBtn.onclick = pause;
 
-    let countdown = 10;
+    const countdownStart = 30;
+    let countdown = countdownStart;
     function updateCountdown() {
         if (!isPaused) {
             const counter = document.getElementById('counter');
@@ -344,7 +371,7 @@
                     currentSong = parseJsonSong(song_json);
                     updateCurrentSongDetails();
                     updateCurrentlyPlaying();
-                    countdown = 10;
+                    countdown = countdownStart;
                     isPaused = true;
                     pause();
                 })
