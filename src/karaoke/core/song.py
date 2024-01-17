@@ -56,5 +56,11 @@ def get_video_link(url: str, embed_yt_videos: bool = False) -> str:
     except Exception:
         return url
 
-    yt: pytube.YouTube = pytube.YouTube.from_id(video_id)
-    return yt.embed_url if embed_yt_videos else yt.watch_url
+    try:
+        yt: pytube.YouTube = pytube.YouTube.from_id(video_id)
+        return yt.embed_url if embed_yt_videos else yt.watch_url
+    except Exception:
+        logging.getLogger(__name__).warning(
+            f"Could not get video link for {url=}, {video_id=}"
+        )
+        return url
