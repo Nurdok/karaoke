@@ -11,6 +11,10 @@
         row-gap: 15px;
     }
 
+    .callToActionBtn {
+        background-color: gold;
+    }
+
     .btn {
         width: 100%;
         padding: 10px 20px;
@@ -33,7 +37,7 @@
 {% block content %}
 <p><span id="username"></span>, what would you like to do?</p>
 <div class="actions">
-    <form action="/rate"><button type="submit" class="btn">Rate songs</button></form>
+    <form action="/rate"><button type="submit" class="btn" id="rateBtn">Rate songs</button></form>
     <form action="/songs" id="songs-form" method="GET">
         <input type="hidden" id="user-id" name="u"/>
         <button type="submit" class="btn">View songs</button>
@@ -48,5 +52,15 @@
     document.getElementById("username").innerText = user.name;
 
     document.getElementById("user-id").value = user.id;
+
+    fetch(`/api/next-unrated-song?u=${user.id}`)
+        .then(response => response.json())
+        .then(song => {
+            if (isValidSongId(song.song_id)) {
+                // There are still songs to be rated, highlight the "Rate" button.
+                document.getElementById("rateBtn").classList.add("callToActionBtn");
+            }
+        })
+        .catch(error => console.error(error));
 </script>
 {% endblock %}

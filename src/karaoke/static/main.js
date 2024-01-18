@@ -190,3 +190,8 @@ function deleteSong(song_id) {
         body: JSON.stringify(data)
     });
 }
+
+function isValidSongId(id) {
+    return id >= 0;
+}
+
