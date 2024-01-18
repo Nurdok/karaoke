@@ -79,6 +79,10 @@
         display: none;
     }
 
+    #join-session-container {
+        display: none;
+    }
+
 
 </style>
 {% endblock %}
@@ -99,6 +103,11 @@
     <button id="stepping-out" class="btn">I'm stepping out</button>
     <button id="stepping-back" class="btn">I'm back!</button>
 </span>
+
+<span id="leave-session-container">
+    <button id="leave-session" class="btn">I'm going home, bye!</button>
+</span>
+
 
 
 <script>
@@ -166,6 +175,7 @@
         }
         console.log("current user is in session? " + current_user_is_in_session);
         document.getElementById("join-session-container").style.display = current_user_is_in_session ? "none" : "block";
+        document.getElementById("leave-session-container").style.display = current_user_is_in_session ? "block" : "none";
     }
 
     let stepOutBtn = document.getElementById('stepping-out');
@@ -237,6 +247,27 @@
                 });
     }
     joinSessionBtn.addEventListener('click', joinSession);
+
+    let leaveSessionBtn = document.getElementById('leave-session');
+    function leaveSession() {
+        const data = {
+            "sessionId": "{{ session_id }}",
+            "userId": getUserOrRedirectToLoginPage().id,
+        }
+        fetch('/api/leave-session', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+                .then(response => {
+                    if (response.ok) {
+                        updateCurrentlyPlaying();
+                    }
+                });
+    }
+    leaveSessionBtn.addEventListener('click', leaveSession);
 
 
     updateCurrentlyPlaying();
