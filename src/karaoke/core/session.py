@@ -86,6 +86,16 @@ class KaraokeSession(Base):
         session.commit()
         self.generate_song_queue(session=session)
 
+    def remove_user_from_session(self, user_id: int, session: Session) -> None:
+        # Remove the user from the session.
+        session_user = (
+            session.query(KaraokeSessionUser)
+            .filter_by(karaoke_session_id=self.id, user_id=user_id)
+            .first()
+        )
+        session.delete(session_user)
+        session.commit()
+
     def generate_song_queue(self, session: Session) -> None:
         user_ids = [user.user_id for user in self.users]
 
