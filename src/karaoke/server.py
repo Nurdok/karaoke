@@ -39,8 +39,9 @@ def with_db_session(f: Callable) -> Callable:
 
 @dataclass
 class RequestDbData:
-    karaoke_session: Optional[KaraokeSession]
-    user: Optional[User]
+    karaoke_session: Optional[KaraokeSession] = None
+    user: Optional[User] = None
+    song: Optional[Song] = None
 
     @classmethod
     def from_post_data(
@@ -52,6 +53,7 @@ class RequestDbData:
                 data, "sessionId", session
             ),
             user=cls.get_user(data, "userId", session),
+            song=cls.get_song(data, "songId", session),
         )
 
     @classmethod
@@ -86,6 +88,16 @@ class RequestDbData:
             return None
 
         return session.query(User).filter_by(id=user_id).first()
+
+    @staticmethod
+    def get_song(
+        data: dict[str, str], key: str, session: Session
+    ) -> Optional[Song]:
+        song_id: int = int(data.get(key, -1))
+        if song_id == -1:
+            return None
+
+        return session.query(Song).filter_by(id=song_id).first()
 
 
 @app.route("/")
@@ -349,41 +361,34 @@ def skip() -> "BaseResponse":
     )
 
 
-def next_video(mark_song: Callable, embed_yt_videos: bool) -> str:
-    session_id: str = request.args.get("s", "")
-    logger.info(f"Getting next video for session {session_id}")
+@with_db_session
+def next_video(
+    mark_song: Callable, embed_yt_videos: bool, session: Session
+) -> str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (karaoke_session := data.karaoke_session) is None:
+        return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session: Optional[KaraokeSession] = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_id)
-            .first()
-        )
-        if karaoke_session is None:
-            return ""
+    mark_song(karaoke_session, session=session)
+    session.commit()
+    song: Optional[Song] = karaoke_session.get_next_song(session=session)
+    session.commit()
+    if song is None:
+        return no_more_songs()
 
-        mark_song(karaoke_session, session=session)
-        session.commit()
-        song: Optional[Song] = karaoke_session.get_next_song(session=session)
-        session.commit()
-        if song is None:
-            return no_more_songs()
-
-        return jsonify_song(song, embed_yt_videos=embed_yt_videos)
+    return jsonify_song(song, embed_yt_videos=embed_yt_videos)
 
 
 @app.route("/api/next-unrated-song")
-def next_unrated_song() -> Response:
-    user_id: int = int(request.args.get("u", -1))
-    if user_id == -1:
+@with_db_session
+def next_unrated_song(session: Session) -> Response:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (user := data.user) is None:
         return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        song: Optional[Song] = get_any_unrated_song(
-            user_id=user_id, session=session
-        )
+    song: Optional[Song] = get_any_unrated_song(
+        user_id=user.id, session=session
+    )
 
     if song is None:
         return jsonify({"song_id": -1})
@@ -398,35 +403,29 @@ def next_unrated_song() -> Response:
     )
 
 
-def set_step_out(data: dict[str, str], step_out: bool) -> Response:
-    user_id: int = int(data.get("userId", -1))
-    session_display_id: str = data.get("sessionId", "")
-    if user_id == -1 or session_display_id == "":
-        logger.info(f"Invalid step out request: {data}")
+@with_db_session
+def set_step_out(
+    data: dict[str, str], step_out: bool, session: Session
+) -> Response:
+    data = RequestDbData.from_post_data(data, session=session)
+
+    if (karaoke_session := data.karaoke_session) is None:
         return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_display_id)
-            .first()
-        )
-        if karaoke_session is None:
-            logger.info(f"Invalid step out request: {data}")
-            return Response(status=400)
+    if (user := data.user) is None:
+        return Response(status=400)
 
-        user: Optional[KaraokeSessionUser] = (
-            session.query(KaraokeSessionUser)
-            .filter_by(user_id=user_id)
-            .filter_by(karaoke_session_id=karaoke_session.id)
-            .first()
-        )
-        if user is None:
-            return Response(status=400)
+    user: Optional[KaraokeSessionUser] = (
+        session.query(KaraokeSessionUser)
+        .filter_by(user_id=user.id)
+        .filter_by(karaoke_session_id=karaoke_session.id)
+        .first()
+    )
+    if user is None:
+        return Response(status=400)
 
-        user.stepped_out = step_out
-        session.commit()
+    user.stepped_out = step_out
+    session.commit()
     return Response(status=200)
 
 
@@ -443,81 +442,69 @@ def step_back() -> Response:
 
 
 @app.route("/api/join-session", methods=["POST"])
-def join_session() -> Response:
-    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
-    user_id: int = int(data.get("userId", -1))
-    session_display_id: str = data.get("sessionId", "")
-    if user_id == -1 or session_display_id == "":
-        logger.info(f"Invalid join session request: {data}")
+@with_db_session
+def join_session(session: Session) -> Response:
+    data = RequestDbData.from_post_data(
+        json.loads(request.data.decode("utf-8")), session=session
+    )
+
+    if (karaoke_session := data.karaoke_session) is None:
         return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_display_id)
-            .first()
-        )
-        if karaoke_session is None:
-            logger.info(f"Invalid join session request: {data}")
-            return Response(status=400)
+    if (user := data.user) is None:
+        return Response(status=400)
 
-        karaoke_session.add_user_to_session(user_id=user_id, session=session)
+    karaoke_session.add_user_to_session(user_id=user.id, session=session)
     return Response(status=200)
 
 
 @app.route("/api/leave-session", methods=["POST"])
-def leave_session() -> Response:
-    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
-    user_id: int = int(data.get("userId", -1))
-    session_display_id: str = data.get("sessionId", "")
-    if user_id == -1 or session_display_id == "":
-        logger.info(f"Invalid leave session request: {data}")
+@with_db_session
+def leave_session(session: Session) -> Response:
+    data = RequestDbData.from_post_data(
+        json.loads(request.data.decode("utf-8")), session=session
+    )
+
+    if (karaoke_session := data.karaoke_session) is None:
         return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_display_id)
-            .first()
-        )
-        if karaoke_session is None:
-            logger.info(f"Invalid leave session request: {data}")
-            return Response(status=400)
+    if (user := data.user) is None:
+        return Response(status=400)
 
-        karaoke_session.remove_user_from_session(
-            user_id=user_id, session=session
-        )
+    karaoke_session.remove_user_from_session(user_id=user.id, session=session)
     return Response(status=200)
 
 
 @app.route("/api/rate-song", methods=["POST"])
-def rate_song() -> Response:
-    data: dict[str, str] = json.loads(request.data.decode("utf-8"))
-    user_id: int = int(data.get("userId", -1))
-    song_id: int = int(data.get("songId", -1))
-    rating_str: str = data.get("rating", "")
-    if user_id == -1 or song_id == -1 or rating_str == "":
-        print(f"Invalid rate song request: {data}")
+@with_db_session
+def rate_song(session: Session) -> Response:
+    raw_data: dict[str, str] = json.loads(request.data.decode("utf-8"))
+    data = RequestDbData.from_post_data(raw_data, session=session)
+    if (karaoke_session := data.karaoke_session) is None:
         return Response(status=400)
 
-    rating: Rating = Rating[rating_str]
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        # Delete any existing rating
-        session.query(UserSongRating).filter_by(
-            user_id=user_id, song_id=song_id
-        ).delete()
+    if (user := data.user) is None:
+        return Response(status=400)
 
-        if rating != Rating.UNKNOWN:
-            user_rating: UserSongRating = UserSongRating(
-                user_id=user_id,
-                song_id=song_id,
-                rating=rating,
-            )
-            session.add(user_rating)
-        session.commit()
+    if (song := data.song) is None:
+        return Response(status=400)
+
+    rating_str: str = raw_data.get("rating", "")
+    rating: Rating = Rating[rating_str]
+
+    # Delete any existing rating
+    session.query(UserSongRating).filter_by(
+        user_id=user.id, song_id=song.id
+    ).delete()
+
+    if rating != Rating.UNKNOWN:
+        user_rating: UserSongRating = UserSongRating(
+            user_id=user.id,
+            song_id=song.id,
+            rating=rating,
+        )
+        session.add(user_rating)
+    session.commit()
     return Response(status=200)
 
 
