@@ -1,4 +1,4 @@
-import datetime
+from dataclasses import dataclass
 import json
 
 import typing
@@ -27,119 +27,169 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 
+def with_db_session(f: Callable) -> Callable:
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        engine = create_engine(LOCAL_DB)
+        with sessionmaker(bind=engine)() as session:
+            return f(*args, **kwargs, session=session)
+
+    wrapper.__name__ = f.__name__
+    return wrapper
+
+
+@dataclass
+class RequestDbData:
+    karaoke_session: Optional[KaraokeSession]
+    user: Optional[User]
+
+    @classmethod
+    def from_post_data(
+        cls, data: dict[str, str], session: Session
+    ) -> "RequestDbData":
+        print(data)
+        return cls(
+            karaoke_session=cls.get_karaoke_session(
+                data, "sessionId", session
+            ),
+            user=cls.get_user(data, "userId", session),
+        )
+
+    @classmethod
+    def from_url_params(
+        cls, data: dict[str, str], session: Session
+    ) -> "RequestDbData":
+        return cls(
+            karaoke_session=cls.get_karaoke_session(data, "s", session),
+            user=cls.get_user(data, "u", session),
+        )
+
+    @staticmethod
+    def get_karaoke_session(
+        data: dict[str, str], key: str, session: Session
+    ) -> Optional[KaraokeSession]:
+        session_id: str = data.get(key, "")
+        if session_id == "":
+            return None
+
+        return (
+            session.query(KaraokeSession)
+            .filter_by(display_id=session_id)
+            .first()
+        )
+
+    @staticmethod
+    def get_user(
+        data: dict[str, str], key: str, session: Session
+    ) -> Optional[User]:
+        user_id: int = int(data.get(key, -1))
+        if user_id == -1:
+            return None
+
+        return session.query(User).filter_by(id=user_id).first()
+
+
 @app.route("/")
 def main() -> str:
     return render_template("index.html")
 
 
 @app.route("/users")
-def list_users() -> str:
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        users = session.query(User).all()
+@with_db_session
+def list_users(session: Session) -> str:
+    users = session.query(User).all()
     return render_template("users.html", users=users)
 
 
 @app.route("/users", methods=["POST"])
-def create_user() -> "BaseResponse":
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        user = User(name=request.form["name"])
-        session.add(user)
-        session.commit()
-        return redirect("/users")
+@with_db_session
+def create_user(session: Session) -> "BaseResponse":
+    user = User(name=request.form["name"])
+    session.add(user)
+    session.commit()
+    return redirect("/users")
 
 
 @app.route("/api/create-session", methods=["POST"])
-def create_session() -> Response | str:
+@with_db_session
+def create_session(session: Session) -> Response | str:
     data = json.loads(request.data)
     user_ids = data["user_ids"]
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = create_karaoke_session(user_ids, session)
-        return jsonify({"session_id": karaoke_session.display_id})
+    karaoke_session = create_karaoke_session(user_ids, session)
+    return jsonify({"session_id": karaoke_session.display_id})
 
 
 @app.route("/generate-static-playlist", methods=["POST"])
-def generate_static_playlist() -> Response | str:
-    print(request.form)
+@with_db_session
+def generate_static_playlist(session: Session) -> Response | str:
     user_ids = json.loads(request.form.get("user_ids", "[]"))
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = create_karaoke_session(user_ids, session)
-        users: list[User] = [
-            session_user.user for session_user in karaoke_session.users
-        ]
-        user_ratings: dict[int, dict[int, Rating]] = {
-            user.id: {
-                song_rating.song.id: song_rating.rating
-                for song_rating in user.ratings
-            }
-            for user in users
+    karaoke_session = create_karaoke_session(user_ids, session)
+    users: list[User] = [
+        session_user.user for session_user in karaoke_session.users
+    ]
+    user_ratings: dict[int, dict[int, Rating]] = {
+        user.id: {
+            song_rating.song.id: song_rating.rating
+            for song_rating in user.ratings
         }
+        for user in users
+    }
 
-        def get_next_song() -> Optional[Song]:
-            next_song = karaoke_session.get_next_song(session=session)
-            if next_song is not None:
-                karaoke_session.mark_current_song_as_played(session=session)
-            return next_song
+    def get_next_song() -> Optional[Song]:
+        next_song = karaoke_session.get_next_song(session=session)
+        if next_song is not None:
+            karaoke_session.mark_current_song_as_played(session=session)
+        return next_song
 
-        songs: list[Song] = [s for s in iter(get_next_song, None)]
-        songs_with_stats: list[dict[str, Any]] = []
-        for song in songs:
-            songs_with_stats.append(
-                {
-                    "id": song.id,
-                    "title": song.title,
-                    "artist": song.artist,
-                    "ratings": {
-                        user.name: user_ratings[user.id]
-                        .get(song.id, Rating.UNKNOWN)
-                        .value
-                        for user in users
-                    },
-                }
-            )
-
-        return render_template(
-            "playlist.html", songs=songs_with_stats, users=users
+    songs: list[Song] = [s for s in iter(get_next_song, None)]
+    songs_with_stats: list[dict[str, Any]] = []
+    for song in songs:
+        songs_with_stats.append(
+            {
+                "id": song.id,
+                "title": song.title,
+                "artist": song.artist,
+                "ratings": {
+                    user.name: user_ratings[user.id]
+                    .get(song.id, Rating.UNKNOWN)
+                    .value
+                    for user in users
+                },
+            }
         )
+
+    return render_template(
+        "playlist.html", songs=songs_with_stats, users=users
+    )
 
 
 @app.route("/songs")
-def list_songs() -> Response | str:
-    user_id: int = int(request.args.get("u", -1))
-    if user_id == -1:
+@with_db_session
+def list_songs(session: Session) -> Response | str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (user := data.user) is None:
         return Response(status=400)
 
     songs_with_ratings: list[dict[str, Any]] = []
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        user: Optional[User] = (
-            session.query(User).filter_by(id=user_id).first()
+    songs: list[Song] = session.query(Song).all()
+    for song in songs:
+        user_rating: Optional[UserSongRating] = (
+            session.query(UserSongRating)
+            .filter_by(user_id=user.id, song_id=song.id)
+            .first()
         )
-        if user is None:
-            return Response(status=400)
-        songs: list[Song] = session.query(Song).all()
-        for song in songs:
-            user_rating: Optional[UserSongRating] = (
-                session.query(UserSongRating)
-                .filter_by(user_id=user_id, song_id=song.id)
-                .first()
-            )
-            songs_with_ratings.append(
-                {
-                    "id": song.id,
-                    "title": song.title,
-                    "artist": song.artist,
-                    "video_link": song.get_video_link(embed_yt_videos=False),
-                    "rating": (
-                        user_rating.rating.value
-                        if user_rating is not None
-                        else None
-                    ),
-                }
-            )
+        songs_with_ratings.append(
+            {
+                "id": song.id,
+                "title": song.title,
+                "artist": song.artist,
+                "video_link": song.get_video_link(embed_yt_videos=False),
+                "rating": (
+                    user_rating.rating.value
+                    if user_rating is not None
+                    else None
+                ),
+            }
+        )
     return render_template("songs.html", songs=songs_with_ratings, user=user)
 
 
@@ -191,54 +241,39 @@ def jsonify_song(song: Song, embed_yt_videos: bool) -> str:
 
 
 @app.route("/api/get-current-song")
-def get_current_song() -> str:
-    session_id: str = request.args.get("s", "")
+@with_db_session
+def get_current_song(session: Session) -> str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (karaoke_session := data.karaoke_session) is None:
+        return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_id)
-            .first()
-        )
-        if karaoke_session is None:
-            return ""
+    if (
+        current_song := karaoke_session.get_current_song(session=session)
+    ) is None:
+        return no_song_playing()
 
-        if (
-            current_song := karaoke_session.get_current_song(session=session)
-        ) is None:
-            return no_song_playing()
-
-        return jsonify_song(current_song.song, embed_yt_videos=False)
+    return jsonify_song(current_song.song, embed_yt_videos=False)
 
 
 @app.route("/api/get-current-scores")
-def get_current_scores() -> str:
-    session_id: str = request.args.get("s", "")
+@with_db_session
+def get_current_scores(session: Session) -> str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (karaoke_session := data.karaoke_session) is None:
+        return Response(status=400)
 
-    engine = create_engine(LOCAL_DB)
-    with sessionmaker(bind=engine)() as session:
-        karaoke_session = (
-            session.query(KaraokeSession)
-            .filter_by(display_id=session_id)
-            .first()
+    scores: list[dict[str, Any]] = []
+    for user in karaoke_session.users:
+        scores.append(
+            {
+                "user_id": user.user_id,
+                "user_name": user.user.name,
+                "user_stepped_out": user.stepped_out,
+                "score": user.score,
+            }
         )
-        if karaoke_session is None:
-            return Response(status=400)
 
-        scores: list[dict[str, Any]] = []
-        for user in karaoke_session.users:
-            scores.append(
-                {
-                    "user_id": user.user_id,
-                    "user_name": user.user.name,
-                    "user_stepped_out": user.stepped_out,
-                    "score": user.score,
-                }
-            )
-
-        logger.info(f"{scores}")
-        return json.dumps(scores)
+    return json.dumps(scores)
 
 
 @app.route("/api/mark-as-played-and-get-next")
