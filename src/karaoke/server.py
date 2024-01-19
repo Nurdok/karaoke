@@ -432,7 +432,7 @@ def join_session() -> Response:
 
 
 @app.route("/api/leave-session", methods=["POST"])
-def leave_se() -> Response:
+def leave_session() -> Response:
     data: dict[str, str] = json.loads(request.data.decode("utf-8"))
     user_id: int = int(data.get("userId", -1))
     session_display_id: str = data.get("sessionId", "")
