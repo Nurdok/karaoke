@@ -11,10 +11,17 @@
         height: 100%;
     }
 
+    .container {
+        height: 100%;
+        margin: 0;
+    }
+
     .content {
         max-width: 100%;
-        padding: 30px;
+        padding: 2em;
+        margin: 0;
         height: 100%;
+        box-sizing: border-box;
     }
 
     .song-container {
@@ -28,21 +35,6 @@
     .song-container h3 {
         margin-top: 0;
         margin-bottom: 2.5em;
-    }
-
-    #rating-container {
-        display: flex;
-        flex-direction: column;
-        justify-content: left;
-        align-items: center;
-    }
-
-    .btn {
-        width: 100%;
-        padding: 10px 20px;
-        font-size: calc(26px + 1vw);
-        cursor: pointer;
-        margin-bottom: 20px;
     }
 
     #leaderboard-container {
@@ -103,11 +95,15 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        align-items: flex-start;
         width: 100%;
+        height: 100%;
     }
 
     #left {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
         flex: 1;
     }
 
@@ -117,7 +113,7 @@
 
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: space-evenly;
         align-items: center;
     }
 
@@ -276,7 +272,6 @@
 
     function updateCurrentSongDetails() {
         const songDetails = document.getElementById('song-details');
-        const ratingsContainer = document.getElementById('rating-container');
         if (currentSong.id !== -1) {
             songDetails.innerHTML = `
                 <h1 id="song-title">${currentSong.title}</h1>
