@@ -480,31 +480,14 @@ def leave_session(session: Session) -> Response:
 def rate_song(session: Session) -> Response:
     raw_data: dict[str, str] = json.loads(request.data.decode("utf-8"))
     data = RequestDbData.from_post_data(raw_data, session=session)
-    if (karaoke_session := data.karaoke_session) is None:
-        return Response(status=400)
-
-    if (user := data.user) is None:
-        return Response(status=400)
-
-    if (song := data.song) is None:
+    if (user := data.user) is None or (song := data.song) is None:
         return Response(status=400)
 
     rating_str: str = raw_data.get("rating", "")
     rating: Rating = Rating[rating_str]
 
     # Delete any existing rating
-    session.query(UserSongRating).filter_by(
-        user_id=user.id, song_id=song.id
-    ).delete()
-
-    if rating != Rating.UNKNOWN:
-        user_rating: UserSongRating = UserSongRating(
-            user_id=user.id,
-            song_id=song.id,
-            rating=rating,
-        )
-        session.add(user_rating)
-    session.commit()
+    user.rate_song(song, rating, session=session)
     return Response(status=200)
 
 
