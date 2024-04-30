@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, Session
 from sqlalchemy import String
 
 from karaoke.core.base import Base
@@ -6,7 +6,8 @@ from karaoke.core.base import Base
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from karaoke.core.rating import UserSongRating
+    from karaoke.core.rating import UserSongRating, Rating
+    from karaoke.core.song import Song
 
 
 class User(Base):
@@ -23,3 +24,23 @@ class User(Base):
 
     def __str__(self) -> str:
         return self.name
+
+    def rate_song(
+        self, song: "Song", rating: "Rating", session: Session
+    ) -> None:
+        # Avoid circular import
+        from karaoke.core.rating import UserSongRating, Rating
+
+        # Delete any existing rating
+        session.query(UserSongRating).filter_by(
+            user_id=self.id, song_id=song.id
+        ).delete()
+
+        if rating != Rating.UNKNOWN:
+            user_rating: UserSongRating = UserSongRating(
+                user_id=self.id,
+                song_id=song.id,
+                rating=rating,
+            )
+            session.add(user_rating)
+        session.commit()

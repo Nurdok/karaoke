@@ -224,7 +224,8 @@ class KaraokeSession(Base):
         )
         return candidates
 
-    def get_rating_score(self, rating: Rating) -> int:
+    @staticmethod
+    def get_rating_score(rating: Rating) -> int:
         return {
             Rating.DONT_KNOW: -1,
             Rating.SING_ALONG: 1,

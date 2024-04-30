@@ -7,8 +7,22 @@ from karaoke.core.rating import UserSongRating
 from karaoke.core.session import KaraokeSession, KaraokeSessionUser
 
 
+def get_overall_rating(song: Song, session: Session) -> int:
+    print(f"Calculating overall rating for {song.title}")
+    score: int = 0
+    ratings = session.query(UserSongRating).filter_by(song_id=song.id).all()
+    print(f"Found {len(ratings)} ratings for {song.title} ({song.id})")
+    for rating in ratings:
+        print(
+            f"Rating by user {rating.user_id}: {rating.rating} ({KaraokeSession.get_rating_score(rating.rating)})"
+        )
+        score += KaraokeSession.get_rating_score(rating.rating)
+        print(f"Accumulated score: {score}")
+    return score
+
+
 def get_any_unrated_song(user_id: int, session: Session) -> Optional[Song]:
-    return (
+    songs = (
         session.query(Song)
         .outerjoin(
             user_ratings := (
@@ -18,7 +32,11 @@ def get_any_unrated_song(user_id: int, session: Session) -> Optional[Song]:
             )
         )
         .filter(user_ratings.c.song_id.is_(None))
-        .first()
+        .all()
+    )
+
+    return max(
+        songs, key=lambda song: get_overall_rating(song, session), default=None
     )
 
 
