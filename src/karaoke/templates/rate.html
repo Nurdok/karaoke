@@ -187,7 +187,7 @@
     }
 
     function updateSongDetails() {
-        console.log(songStack);
+        console.log(`songStack: ${songStack}`);
         let currentSong = songStack.slice(-1)[0];
 
         if (isValidSongId(currentSong.id)) {
@@ -219,6 +219,7 @@
     }
 
     function getNextSong() {
+        console.log(`Calling /api/next-unrated-song?u=${user.id}`);
         fetch(`/api/next-unrated-song?u=${user.id}`)
                 .then(response => response.json())
                 .then(song => {
