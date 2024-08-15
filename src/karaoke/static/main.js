@@ -139,7 +139,7 @@ function rateSong(user_id, song_id, rating_int) {
         songId: song_id,
         rating: ratingString
     };
-    console.log(`Calling /api/rate-song with ${data}`);
+    console.log(`Calling /api/rate-song with ${JSON.stringify(data)}`);
 
     return fetch('/api/rate-song', {
         method: 'POST',
