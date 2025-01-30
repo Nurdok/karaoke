@@ -19,6 +19,10 @@
         margin-top: 20px;
     }
 
+    #bookmark-this-link {
+       text-align: center;
+    }
+
 </style>
 {% endblock %}
 
@@ -41,26 +45,14 @@
 
 <div id="session-details">
     <div id="session-id-container">
-        <p>Your session ID is:</p>
-        <h1 id="session-id"></h1>
-        <p>Enter companion mode on your phone by scanning this QR code:</p>
+        <p>Join on your phone by scanning this QR code:</p>
         <span id="companion-qr-code"></span>
-        <p>Or click on <a href="" id="companion-link">this link</a></p>
-
     </div>
 
-    <form id="goto-session" action="/player">
-        <input type="hidden" id="hidden-session-id" name="s" value="" />
-        <button type="submit">Go to player!</button>
-    </form>
-    <p>
-        Alternatively, you can bookmark these links:
-    <ul>
-        <li><a href="" id="next-link">Next</a></li>
-        <li><a href="" id="skip-link">Skip</a></li>
-        <li><a href="" id="snooze-link">Snooze</a></li>
-    </ul>
-    </p>
+    <div id="bookmark-this-link">
+        <h3>Drag this link to your bookmarks now:</h3>
+        <h1><a href="" id="next-link">Next Song!</a></h1>
+    </div>
 </div>
 
 <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
@@ -94,18 +86,13 @@
         })
                 .then(response => response.json())
                 .then(response_data => {
-                    document.getElementById("session-id").innerText = response_data.session_id;
                     document.getElementById("session-details").style.display = "block";
                     document.getElementById("start-session-form").style.display = "none";
-                    document.getElementById("hidden-session-id").value = response_data.session_id;
 
                     document.getElementById("next-link").href = "/next?s=" + response_data.session_id;
-                    document.getElementById("skip-link").href = "/skip?s=" + response_data.session_id;
-                    document.getElementById("snooze-link").href = "/snooze?s=" + response_data.session_id;
 
                     let companion_link = "http://" + location.host + "/companion?s=" + response_data.session_id;
                     new QRCode(document.getElementById("companion-qr-code"), companion_link);
-                    document.getElementById("companion-link").href = companion_link;
                 });
 
     }
