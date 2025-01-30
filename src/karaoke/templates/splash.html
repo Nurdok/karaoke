@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block subtitle %}Loading next song...{% endblock %}
+{% block subtitle %}Next song!{% endblock %}
 
 {% block logo %}{% endblock %}
 
@@ -344,7 +344,14 @@
     }
     pauseBtn.onclick = pause;
 
-    const countdownStart = 10;
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    let countdownStart;
+    try {
+        countdownStart = parseInt(urlParams.get('countdown') ?? 10)
+    } catch (error) {
+        countdownStart = 10;
+    }
     let countdown = countdownStart;
     function updateCountdown() {
         if (!isPaused) {
