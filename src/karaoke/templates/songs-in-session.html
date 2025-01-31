@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Songs{% endblock %}
+
+{% block head %}
+<style>
+    .song-container {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 0.75em;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px 20px;
+        font-size: calc(26px + 1vw);
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+    #reset-ratings-btn {
+        display: block;
+    }
+
+    #reset-ratings-confirm-btn {
+        display: none;
+    }
+
+    .edit-form {
+        font-size: 0.5em;
+        display: none;
+        padding-left: 2.5em;
+        padding-top: 1em;
+        padding-bottom: 2em;
+    }
+
+    .confirm-delete-btn {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+        <p>Your session id is {{session.display_id}}</p>
+<div class="song-list">
+    {% for song in songs %}
+    <div id="song-and-form-container-{{song.id}}">
+    <div class="song-container" id="song-container-{{song.id}}">
+        <span class="song-details">
+            <b><span id="song-title-{{song.id}}">{{ song.title }}</span></b> by <b><span id="song-artist-{{song.id}}">{{ song.artist }}</span></b>
+        </span>
+        <div class="actions-container">
+        {% if not song.played %}
+            <form method="GET" action="/next-manual-song">
+                <input type="hidden" name="song" value="{{ song.id }}"/>
+                <input type="hidden" name="s" value="{{ session.display_id }}"/>
+                <button id="play-action-{{song.id}}" type="submit">Play now!</button>
+            </form>
+
+        {% else %}
+            <button id="unplay-action-{{song.id}}">Unplay</button>
+        </div>
+
+        {% endif %}
+    </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    // When clicking "unplay" for a specific song, mark the song as unplayed in the API, then change its button
+   function onPlay(song_id) {
+   }
+
+</script>
+{% endblock %}

@@ -210,6 +210,10 @@
                 <div id="songButtons">
                     <button class="textBtn" id="skip">Not today</button>
                     <button class="textBtn" id="snooze">Maybe later</button>
+                    <form action="/songs-in-session" method="GET">
+                        <input type="hidden" name="s" value="{{ session_id }}"/>
+                        <button class="textBtn" id="pick-song" type="submit">Pick Manually</button>
+                    </form>
                 </div>
             </h2>
         </div>
@@ -391,7 +395,7 @@
     function snooze() {
         getNextVideo('snooze-and-get-next');
     }
-    document.getElementById("snooze").onclick = skip;
+    document.getElementById("snooze").onclick = snooze;
 
     updateCurrentlyPlaying();
     updateCountdown();

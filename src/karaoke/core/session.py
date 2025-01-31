@@ -277,6 +277,14 @@ class KaraokeSession(Base):
         logger.info(f"No current song found.")
         return None
 
+    def replace_current_song(self, song_id, *, session: Session) -> None:
+        current_song = self.get_current_song(session=session)
+        if current_song is not None:
+            current_song.current_song = False
+        for song in self.songs:
+            if song.song_id == song_id:
+                song.current_song = True
+
     def skip_current_song(self, session: Session) -> None:
         if (current_song := self.get_current_song(session=session)) is None:
             return

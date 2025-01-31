@@ -5,7 +5,11 @@ import typing
 from flask import Flask, render_template, jsonify, request, Response, redirect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from karaoke.core.session import KaraokeSession, KaraokeSessionUser
+from karaoke.core.session import (
+    KaraokeSession,
+    KaraokeSessionUser,
+    KaraokeSessionSong,
+)
 from karaoke.core.user import User
 from karaoke.core.song import Song
 from karaoke.core.utils import get_any_unrated_song, create_karaoke_session
@@ -63,6 +67,7 @@ class RequestDbData:
         return cls(
             karaoke_session=cls.get_karaoke_session(data, "s", session),
             user=cls.get_user(data, "u", session),
+            song=cls.get_song(data, "song", session),
         )
 
     @staticmethod
@@ -205,6 +210,38 @@ def list_songs(session: Session) -> Response | str:
     return render_template("songs.html", songs=songs_with_ratings, user=user)
 
 
+@app.route("/songs-in-session")
+@with_db_session
+def list_songs_in_session(session: Session) -> Response | str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if (karaoke_session := data.karaoke_session) is None:
+        return Response(status=400)
+
+    session_songs = (
+        session.query(KaraokeSessionSong)
+        .filter_by(karaoke_session_id=karaoke_session.id)
+        .all()
+    )
+
+    songs = []
+    for song in session_songs:
+        songs.append(
+            {
+                "id": song.song.id,
+                "title": song.song.title,
+                "artist": song.song.artist,
+                "video_link": song.song.get_video_link(embed_yt_videos=False),
+                "played": song.played,
+            }
+        )
+
+    return render_template(
+        "songs-in-session.html",
+        songs=songs,
+        session=karaoke_session,
+    )
+
+
 @app.route("/player")
 def index() -> str:
     session_id: str = request.args.get("s", "")
@@ -308,6 +345,26 @@ def mark_as_played_and_redirect_to_next() -> str | Response:
     next_video(mark_song, embed_yt_videos=False)
     session_id: str = request.args.get("s", "")
     return render_template("splash.html", session_id=session_id)
+
+
+@app.route("/next-manual-song")
+@with_db_session
+def next_manual_song(session) -> str:
+    data = RequestDbData.from_url_params(request.args, session=session)
+    if data.song is None or data.karaoke_session is None:
+        return Response(status=400)
+
+    def mark_song(
+        karaoke_session: KaraokeSession, *, session: Session
+    ) -> None:
+        karaoke_session.replace_current_song(
+            song_id=data.song.id, session=session
+        )
+
+    next_video(mark_song, embed_yt_videos=False)
+    return render_template(
+        "splash.html", session_id=data.karaoke_session.display_id
+    )
 
 
 @app.route("/api/snooze-and-get-next")
