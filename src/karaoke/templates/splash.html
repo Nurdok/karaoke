@@ -43,6 +43,7 @@
         width: 100%;
 
         transform: rotateY(0deg);
+        z-index: 1;
     }
 
     #companion-qr-code {
@@ -54,6 +55,7 @@
         display: flex;
 
         transform: rotateY(-180deg);
+        z-index: 0;
     }
 
     #leaderboard-table {
@@ -115,6 +117,7 @@
         flex-direction: column;
         justify-content: space-evenly;
         align-items: center;
+        position: relative;
     }
 
     #flipper {
@@ -134,6 +137,7 @@
         transform-style: preserve-3d;
         backface-visibility: hidden;
         transition: transform .6s ease-in-out;
+        z-index: 1;
     }
 
     #flipper.flip #leaderboard-container {
@@ -184,6 +188,9 @@
 
     #showQr {
         background: url("/static/qrcode-solid.svg") no-repeat center;
+        position: relative;
+        z-index: 9999;
+        pointer-events: auto;
     }
 
     #songButtons {
